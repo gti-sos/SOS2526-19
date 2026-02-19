@@ -1,0 +1,20 @@
+{
+  "name": "sos2526-19",
+  "version": "0.0.0",
+  "description": "- **Team**\r   - Pablo Rodríguez Armesto (https://github.com/PabloRodriguezArmesto)\r   - Raúl de los Reyes Benítez (https://github.com/Rauldelos)\r   - Javier Morales Jiménez (https://github.com/JaviMJ2)\r - **Project description**: Our project analyzes the relationship between the productivity per worker in several countries and data about droughts and earthquakes\r around these countries.\r - **Repository**: [gti-sos/SOS2526-19](https://github.com/gti-sos/SOS2526-19)",
+  "homepage": "https://github.com/gti-sos/SOS2526-19#readme",
+  "bugs": {
+    "url": "https://github.com/gti-sos/SOS2526-19/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gti-sos/SOS2526-19.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index-PRA.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
