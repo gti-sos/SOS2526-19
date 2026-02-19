@@ -16,5 +16,8 @@
   "main": "index-PRA.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cool-ascii-faces": "^1.3.4"
   }
 }
