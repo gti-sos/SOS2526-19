@@ -36,15 +36,10 @@ function mediaSeveridadPorPais(filas, pais) {
     return suma / valores.length;
 }
 
-try {
-    const datos = cargarDatos(ARCHIVO_EXCEL, NOMBRE_HOJA);
+const datos = cargarDatos(ARCHIVO_EXCEL, NOMBRE_HOJA);
 
-    const resultado = mediaSeveridadPorPais(datos, PAIS);
+const resultado = mediaSeveridadPorPais(datos, PAIS);
 
-    console.log("=== MEDIA SEVERIDAD ===");
-    console.log("País:", PAIS);
-    console.log("Media severidad:", resultado);
-
-} catch (err) {
-    console.error(err.message);
-}
+console.log("=== MEDIA SEVERIDAD ===");
+console.log("País:", PAIS);
+console.log("Media severidad:", resultado);
