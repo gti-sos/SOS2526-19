@@ -9,5 +9,5 @@
 around these countries.
 - **Repository**: [gti-sos/SOS2526-19](https://github.com/gti-sos/SOS2526-19)
 
-- **Deployment**
+- **URI**
   Render URL: https://sos2526-19.onrender.com
