@@ -249,6 +249,14 @@ app.delete(BASE, (req, res) => {
   res.status(200).json({ message: "All deleted" });
 });
 
+app.all(BASE, (req, res) => {
+  res.status(405).json({ error: "Method Not Allowed" });
+});
+
+app.all(`${BASE}/:id`, (req, res) => {
+  res.status(405).json({ error: "Method Not Allowed" });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
