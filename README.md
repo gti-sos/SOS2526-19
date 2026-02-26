@@ -1,6 +1,5 @@
 ## SOS2425-19
 
-
 - **Team**
   - Pablo Rodríguez Armesto (https://github.com/PabloRodriguezArmesto)
   - Raúl de los Reyes Benítez (https://github.com/Rauldelos)
