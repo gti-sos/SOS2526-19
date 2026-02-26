@@ -1,16 +1,16 @@
 "use strict";
 
-const xlsx = require("xlsx");
+const XLSX = require("xlsx");
 
-const ARCHIVO_EXCEL = "./SOS2526-19-Propuesta.xlsx";
+const ARCHIVO_EXCEL = "./SOS2526-19-Propuesta.XLSX";
 const NOMBRE_HOJA = "Javier";
 
 function cargarDatos(archivo, hoja) {
-    let libro = xlsx.readFile(archivo);
+    let libro = XLSX.readFile(archivo);
     let sheet = libro.Sheets[hoja];
 
     if (!sheet) throw new Error("No existe la hoja: " + hoja);
-    return xlsx.utils.sheet_to_json(sheet, { defval: null });
+    return XLSX.utils.sheet_to_json(sheet, { defval: null });
 }
 
 function mediaSeveridadPorPais(filas, pais) {
