@@ -112,7 +112,9 @@ app.get(`${BASE}/loadInitialData`, (req, res) => {
 });
 app.use(BASE, requireApiKey);
 
+//=======================================//
 //============ FUNCIONES RDB ============//
+//=======================================//
 function meanByCountry_RDB(rows, countryValue, field) {
   const subset = rows.filter(r => r.country === countryValue);
 
@@ -263,7 +265,13 @@ app.all(`${BASE}/:id`, (req, res) => {
   res.status(405).json({ error: "Method Not Allowed" });
 });
 
+//=======================================//
 //============ FUNCIONES JMJ ============//
+//=======================================//
+
+const BASE_JMJ = `/api/v1/earthquakes`;
+let db_JMJ = [];
+
 function mediaSeveridadPorPais(filas, pais) {
     let subset = filas.filter(f => f.country === pais);
 
@@ -296,7 +304,122 @@ app.get("/samples/JMJ", (req, res) => {
   }
 });
 
+app.get(`${BASE_JMJ}/loadInitialData`, (req, res) => {
+  if (db_JMJ.length > 0) {
+    return res.status(200).json({
+      message: "La db ya contiene datos.",
+      count: db_JMJ.length
+    });
+  }
+
+  let initial = cargarDatos(EXCEL_FILE, SHEET_NAME_JMJ);
+
+  db_JMJ = initial.map((x, i) => ({ id: i + 1, ...x }));
+
+  return res.status(201).json({
+    message: `DB inicializada con ${db_JMJ.length} datos.`,
+    count: db_JMJ.length
+  });
+});
+
+app.use(BASE_JMJ, requireApiKey);
+
+// -------- GET colección (200 OK) ----------
+app.get(BASE_JMJ, (req, res) => {
+  res.status(200).json(db_JMJ);
+});
+
+// -------- POST crear (201 / 400 / 409) ----------
+app.post(BASE_JMJ, (req, res) => {
+  const obj = req.body;
+
+  if ( !obj || typeof obj.country !== "string" || obj.country.trim().length === 0 || !obj.fromdate || obj.severity === undefined || !Number.isFinite(Number(obj.severity)) ) {
+    return res.status(400).json({ error: "Bad Request" });
+  }
+
+  const c = db_JMJ.filter(x => x.pais === obj.pais && x.fechaInicio === obj.fechaInicio);
+  if (c.length > 0) return res.status(409).json({ error: `Ya existe un terrmoto en ${obj.pais} con fecha ${obj.fechaInicio}` });
+
+  const nuevo_id = db_JMJ.length > 0 ? Math.max(...db_JMJ.map(x => x.id)) + 1 : 1;
+  const nuevoTerremoto = {
+    id: nuevo_id,
+    country: obj.country,
+    fromdate: obj.fromdate,
+    todate: obj.todate || obj.fromdate,
+    severity: Number(obj.severity),
+    alertlevel: obj.alertlevel || null,
+    depth: obj.depth || null,
+    exposed_population: obj.exposed_population || null
+  };
+
+  db_JMJ.push(nuevoTerremoto);
+  res.status(201).json(nuevoTerremoto);
+});
+
+// -------- DELETE colección (200 OK) ----------
+app.delete(BASE_JMJ, (req, res) => {
+  db_JMJ = [];
+  res.status(200).json({ message: "Todos los datos borrados." });
+});
+
+// -------- GET por id (200 / 404) ----------
+app.get(`${BASE_JMJ}/:id`, (req, res) => { // ":id" se usa para indicar que hay un parametro en la url que indica el elemento en especifico
+  const id = Number(req.params.id);
+  const item = db_JMJ.filter(x => x.id === id);
+  if (!item) return res.status(404).json({ error: `No se ha encontrado el objeto ${id}.` });
+  res.status(200).json(item);
+});
+
+// -------- PUT por id (200 / 400 / 404 / 409) ----------
+app.put(`${BASE_JMJ}/:id`, (req, res) => {
+  const id = Number(req.params.id);
+  const obj = req.body;
+
+  const idx = db_JMJ.findIndex(x => x.id === id);
+  if (idx === -1) return res.status(404).json({ error: "Not Found" });
+
+  if (
+    !obj ||
+    typeof obj.country !== "string" ||
+    obj.country.trim().length === 0 ||
+    !obj.fromdate ||
+    obj.severity === undefined ||
+    !Number.isFinite(Number(obj.severity))
+  ) {
+    return res.status(400).json({ error: "Bad Request" });
+  }
+
+  const conflict = db_JMJ.some(x => x.id !== id && x.country === obj.country && x.fromdate === obj.fromdate);
+  if (conflict) return res.status(409).json({ error: "Conflict" });
+
+  db_JMJ[idx] = {
+    id,
+    country: obj.country,
+    fromdate: obj.fromdate,
+    todate: obj.todate || obj.fromdate,
+    severity: Number(obj.severity),
+    alertlevel: obj.alertlevel || null,
+    depth: obj.depth || null,
+    exposed_population: obj.exposed_population || null
+  };
+
+  res.status(200).json(db_JMJ[idx]);
+});
+
+// -------- DELETE por id (200 / 404) ----------
+app.delete(`${BASE_JMJ}/:id`, (req, res) => {
+  const id = Number(req.params.id);
+  const idx = db_JMJ.findIndex(x => x.id === id);
+  if (idx === -1) return res.status(404).json({ error: `No se ha encontrado el objeto ${id}` });
+
+  const deleted = db_JMJ[idx];
+  db_JMJ.splice(idx, 1);
+  res.status(200).json({ message: "Elemento eliminado.", deleted });
+});
+
+//=======================================//
 //============ FUNCIONES PRA ============//
+//=======================================//
 function calculaMediaDuracion(datos) { //recibe los datos de la hoja de excel en JSON
     const grupos = {};
 
