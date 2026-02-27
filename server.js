@@ -112,6 +112,39 @@ app.get(`${BASE}/loadInitialData`, (req, res) => {
 });
 app.use(BASE, requireApiKey);
 
+//============ FUNCIONES RDB ============//
+function meanByCountry_RDB(rows, countryValue, field) {
+  const subset = rows.filter(r => r.country === countryValue);
+
+  const values = subset
+    .map(r => Number(r[field]))
+    .filter(v => Number.isFinite(v));
+
+  if (values.length === 0) return null;
+
+  const sum = values.reduce((acc, v) => acc + v, 0);
+  return sum / values.length;
+}
+
+app.get("/samples/RDB", (req, res) => {
+  try {
+    const country = req.query.country || "Spain";
+    const NUMERIC_FIELD_RDB = "productivity_hour";
+
+    const rows = cargarDatos(EXCEL_FILE, SHEET_NAME_RDB);
+    const mean = meanByCountry_RDB(rows, country, NUMERIC_FIELD_RDB);
+
+    res.status(200).json({
+      sample: "RDB",
+      country,
+      field: NUMERIC_FIELD_RDB,
+      mean
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // -------- GET colección (200 OK) ----------
 app.get(BASE, (req, res) => {
   res.status(200).json(db);
@@ -228,39 +261,6 @@ app.all(BASE, (req, res) => {
 
 app.all(`${BASE}/:id`, (req, res) => {
   res.status(405).json({ error: "Method Not Allowed" });
-});
-
-//============ FUNCIONES RDB ============//
-function meanByCountry_RDB(rows, countryValue, field) {
-  const subset = rows.filter(r => r.country === countryValue);
-
-  const values = subset
-    .map(r => Number(r[field]))
-    .filter(v => Number.isFinite(v));
-
-  if (values.length === 0) return null;
-
-  const sum = values.reduce((acc, v) => acc + v, 0);
-  return sum / values.length;
-}
-
-app.get("/samples/RDB", (req, res) => {
-  try {
-    const country = req.query.country || "Spain";
-    const NUMERIC_FIELD_RDB = "productivity_hour";
-
-    const rows = cargarDatos(EXCEL_FILE, SHEET_NAME_RDB);
-    const mean = meanByCountry_RDB(rows, country, NUMERIC_FIELD_RDB);
-
-    res.status(200).json({
-      sample: "RDB",
-      country,
-      field: NUMERIC_FIELD_RDB,
-      mean
-    });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
 });
 
 //============ FUNCIONES JMJ ============//
