@@ -297,3 +297,40 @@ app.get("/samples/JMJ", (req, res) => {
 });
 
 //============ FUNCIONES PRA ============//
+function calculaMediaDuracion(datos) { //recibe los datos de la hoja de excel en JSON
+    const grupos = {};
+
+    datos.forEach(obj => {
+        const clave = obj['country'];
+        const valor = Number(obj['duration_day']);
+
+        if (!grupos[clave]) {
+        grupos[clave] = [];
+        }
+
+        grupos[clave].push(valor);
+    });
+
+    const resultado = {};
+
+    for (const clave in grupos) {
+        if (grupos[clave].length > 1) {
+        const suma = grupos[clave].reduce((acc, val) => acc + val, 0);
+        resultado[clave] = suma / grupos[clave].length;
+        }
+    }
+
+    return resultado;
+}
+
+app.get("/samples/PRA", (req, res) => {
+  try {
+    let datos = cargarDatos(EXCEL_FILE, SHEET_NAME_PRA);
+    let resultado = calculaMediaDuracion(datos);
+
+    res.status(200).send(resultado);
+
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
