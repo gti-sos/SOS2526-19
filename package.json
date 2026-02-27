@@ -19,8 +19,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "cool-ascii-faces": "^1.3.4",
     "csv-parser": "^3.2.0",
     "express": "^5.2.1",
+    "fs": "^0.0.1-security",
+    "marked": "^17.0.3",
     "xlsx": "^0.18.5"
   }
 }

@@ -1,82 +1,46 @@
 "use strict";
 
-const express = require("express");
-const path = require("path");
+//============ IMPORTS ============//
+const express = require("express"); // framework para microservicios que permite filtrar el protocolo http y establecer el comportamiento del microsevicio con él
 const xlsx = require("xlsx");
 
-const app = express();
-app.use(express.json());
+const cool = require("cool-ascii-faces");
 
-// Render te da el puerto en process.env.PORT
-const PORT = process.env.PORT || 3000;
+const fs = require("fs");
+const { marked } = require("marked");
 
-const EXCEL_FILE = path.join(__dirname, "SOS2526-19-Propuesta.xlsx");
-const SHEET_NAME_RDB = "Raúl"; 
-const NUMERIC_FIELD_RDB = "productivity_hour"; 
+//============ INICIAR LA APP WEB ============//
+const app = express(); // definimos la app con express
+app.use(express.json()); // parsea toda peticion de la app a formato JSON
 
+const PORT = process.env.PORT || 3000; // Render te da el puerto en process.env.PORT
+const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 
-
-function loadRowsFromExcel_RDB() {
-  const wb = xlsx.readFile(EXCEL_FILE);
-  const sheet = wb.Sheets[SHEET_NAME_RDB];
-
-  if (!sheet) {
-    throw new Error(`No existe la hoja "${SHEET_NAME_RDB}"`);
-  }
-
-  return xlsx.utils.sheet_to_json(sheet, { defval: null });
-}
-
-function meanByCountry_RDB(rows, countryValue, field) {
-  const subset = rows.filter(r => r.country === countryValue);
-
-  const values = subset
-    .map(r => Number(r[field]))
-    .filter(v => Number.isFinite(v));
-
-  if (values.length === 0) return null;
-
-  const sum = values.reduce((acc, v) => acc + v, 0);
-  return sum / values.length;
-}
-
-// 1) Página estática /about (HTML con express.static)
-app.use("/about", express.static(path.join(__dirname, "public")));
-
-// 2) Ruta dinámica /cool
-app.get("/cool", (req, res) => {
-  const now = new Date();
-  res.send(`
-    <h1>Cool route 😎</h1>
-    <p>Fecha y hora: ${now.toISOString()}</p>
-    <p>Un número random: ${Math.floor(Math.random() * 1000)}</p>
-  `);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
-// ===== Ruta requerida: /samples/RDB =====
-app.get("/samples/RDB", (req, res) => {
-  try {
-    const country = req.query.country || "Spain";
+//============ VARIABLES APP WEB ============//
+const SHEET_NAME_RDB = "Raúl";
+const SHEET_NAME_JMJ = "Javier";
+const SHEET_NAME_PRA = "Pablo"; 
 
-    const rows = loadRowsFromExcel_RDB();
-    const mean = meanByCountry_RDB(rows, country, NUMERIC_FIELD_RDB);
+//============ CARGAR DATOS ============//
+function cargarDatos(archivo, hoja) {
+    let libro = xlsx.readFile(archivo);
+    let sheet = libro.Sheets[hoja];
 
-    res.status(200).json({
-      sample: "RDB",
-      country,
-      field: NUMERIC_FIELD_RDB,
-      mean
-    });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+    if (!sheet) throw new Error("No existe la hoja: " + hoja);
+    return xlsx.utils.sheet_to_json(sheet, { defval: null });
+}
 
+//============ REDIRECCIONES PROTOCOLO HTTP ============//
 const RESOURCE = "workers-productivity";
 const BASE = `/api/v1/${RESOURCE}`;
 
-const API_KEY = process.env.API_KEY || "rdb123"; // (en Render pon API_KEY como env var)
+let db = []; // Fuente de datos en memoria (NodeJS)
 
+const API_KEY = process.env.API_KEY || "rdb123"; // (en Render pon API_KEY como env var)
 function requireApiKey(req, res, next) {
   const key = req.header("x-api-key");
   if (!key || key !== API_KEY) {
@@ -85,30 +49,41 @@ function requireApiKey(req, res, next) {
   next();
 }
 
-// Fuente de datos en memoria (NodeJS)
-let db = [];
-let nextId = 1;
+app.get("/cool", (req, res) => {
+  const now = new Date();
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <body>
+      ${cool()}
+    </body>
+    </html>
+  `);
+});
 
-// Validación mínima
-function isValidItem(o) {
-  return (
-    o &&
-    typeof o.country === "string" &&
-    o.country.trim().length > 0 &&
-    Number.isInteger(o.year) &&
-    typeof o.productivity_hour === "number" &&
-    Number.isFinite(o.productivity_hour)
-  );
-}
+app.get("/about", (req, res) => {
+  const readme = fs.readFileSync("./README.md", "utf-8");
+  const html = marked(readme);
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="utf-8">
+      <title>About SOS2526-19</title>
+    </head>
+    <body>
+      ${html}
+    </body>
+    </html>
+  `);
+});
 
 // PUNTO 12: loadInitialData
-// - si db está vacío: crea 10+ elementos -> 201
-// - si ya hay datos: no re-crea -> 200
-
 app.get(`${BASE}/loadInitialData`, (req, res) => {
+  // - si ya hay datos: no re-crea -> 200 OK
   if (db.length > 0) {
     return res.status(200).json({
-      message: "Data already initialized",
+      message: "La db contiene datos.",
       count: db.length
     });
   }
@@ -127,16 +102,14 @@ app.get(`${BASE}/loadInitialData`, (req, res) => {
     { country: "Cambodia", year: 1999, productivity_hour: 718.3701884 }
   ];
 
-  db = initial.map((x) => ({ id: nextId++, ...x }));
+  db = initial.map((x, i) => ({ id: i, ...x }));
 
+  // - si db está vacío: crea 10+ elementos -> 201 CREATED
   return res.status(201).json({
-    message: "Initial data loaded",
+    message: "La db ha sido inicializada con 10 datos.",
     count: db.length
   });
 });
-
-// Aplica 401 a todo el recurso
-// (si quieres que /loadInitialData sea público, coloca este app.use DESPUÉS de esa ruta)
 app.use(BASE, requireApiKey);
 
 // -------- GET colección (200 OK) ----------
@@ -257,6 +230,70 @@ app.all(`${BASE}/:id`, (req, res) => {
   res.status(405).json({ error: "Method Not Allowed" });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+//============ FUNCIONES RDB ============//
+function meanByCountry_RDB(rows, countryValue, field) {
+  const subset = rows.filter(r => r.country === countryValue);
+
+  const values = subset
+    .map(r => Number(r[field]))
+    .filter(v => Number.isFinite(v));
+
+  if (values.length === 0) return null;
+
+  const sum = values.reduce((acc, v) => acc + v, 0);
+  return sum / values.length;
+}
+
+app.get("/samples/RDB", (req, res) => {
+  try {
+    const country = req.query.country || "Spain";
+    const NUMERIC_FIELD_RDB = "productivity_hour";
+
+    const rows = cargarDatos(EXCEL_FILE, SHEET_NAME_RDB);
+    const mean = meanByCountry_RDB(rows, country, NUMERIC_FIELD_RDB);
+
+    res.status(200).json({
+      sample: "RDB",
+      country,
+      field: NUMERIC_FIELD_RDB,
+      mean
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
+
+//============ FUNCIONES JMJ ============//
+function mediaSeveridadPorPais(filas, pais) {
+    let subset = filas.filter(f => f.country === pais);
+
+    if (subset.length === 0) {
+        console.log("No hay datos para ese país");
+        return;
+    }
+
+    let valores = subset
+        .map(f => Number(f["severity"])) // transformar los caracteres en número
+        .filter(v => Number.isFinite(v)); // devuelve aquellos valores que son numericos (finitos), ya que ha podido parsear alguna letra
+
+    let suma = valores.reduce((acc, v) => acc + v, 0); 
+
+    return suma / valores.length;
+}
+
+app.get("/samples/JMJ", (req, res) => {
+  try {
+    let PAIS = req.query.pais || "Iran";
+    let datos = cargarDatos(EXCEL_FILE, SHEET_NAME_JMJ);
+    let resultado = mediaSeveridadPorPais(datos, PAIS);
+
+    res.status(200).json({
+      pais: PAIS,
+      media_severidad: resultado
+    });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+//============ FUNCIONES PRA ============//
