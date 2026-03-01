@@ -35,6 +35,14 @@ function cargarDatos(archivo, hoja) {
 }
 
 //============ REDIRECCIONES PROTOCOLO HTTP ============//
+const API_KEY = process.env.API_KEY || "rdb-superkey"; // (en Render pon API_KEY como env var)
+function requireApiKey(req, res, next) {
+  const key = req.header("x-api-key");
+  if (!key || key !== API_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+}
 
 app.get("/cool", (req, res) => {
   res.send(`
@@ -113,6 +121,8 @@ app.get(`${BASE_RDB}/loadInitialData`, (req, res) => {
     count: db_RDB.length
   });
 });
+
+app.use(BASE_RDB, requireApiKey);
 
 app.get("/samples/RDB", (req, res) => {
   try {
@@ -282,7 +292,8 @@ app.get(`${BASE_JMJ}/loadInitialData`, (req, res) => {
   if (db_JMJ.length > 0) {
     return res.status(200).json({
       message: "La db ya contiene datos.",
-      count: db_JMJ.length
+      count: db_JMJ.length,
+      data: db_JMJ
     });
   }
 
@@ -295,6 +306,8 @@ app.get(`${BASE_JMJ}/loadInitialData`, (req, res) => {
     count: db_JMJ.length
   });
 });
+
+app.use(BASE_JMJ, requireApiKey);
 
 // -------- GET colección (200 OK) ----------
 app.get(BASE_JMJ, (req, res) => {
