@@ -72,7 +72,7 @@ app.get("/about", (req, res) => {
   `);
 });
 
-//=======================================//
+{//=======================================//
 //============ FUNCIONES RDB ============//
 //=======================================//
 const BASE_RDB = "/api/v1/workers-productivity";
@@ -247,7 +247,7 @@ app.all(BASE_RDB, (req, res) => {
 
 app.all(`${BASE_RDB}/:id`, (req, res) => {
   res.status(405).json({ error: "Method Not Allowed" });
-});
+});}
 
 //=======================================//
 //============ FUNCIONES JMJ ============//
