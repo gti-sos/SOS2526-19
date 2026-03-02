@@ -460,6 +460,8 @@ app.get(`${BASE_PRA}/loadInitialData`, (req, res) => {
   });
 });
 
+//app.use(BASE_PRA, requireApiKey);
+
 // -------- GET colección (200 OK) ----------
 app.get(BASE_PRA, (req, res) => {
   res.status(200).json(db_PRA);
@@ -497,6 +499,11 @@ app.post(BASE_PRA, (req, res) => {
 app.delete(BASE_PRA, (req, res) => {
   db_PRA = [];
   res.status(200).json({ message: "Todos los datos borrados." });
+});
+
+
+app.all(BASE_PRA, (req, res) => {
+  res.status(405).json({ error: "Method Not Allowed" });
 });
 
 // -------- GET por id (200 / 404) ----------
