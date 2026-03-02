@@ -454,6 +454,8 @@ app.get(`${BASE_PRA}/loadInitialData`, (req, res) => {
 
   db_PRA = initial.map((x, i) => ({ id: i + 1, ...x }));
 
+  app.use(BASE_PRA, requireApiKey);
+
   return res.status(201).json({
     message: `DB inicializada con ${db_PRA.length} datos.`,
     count: db_PRA.length
@@ -497,6 +499,10 @@ app.post(BASE_PRA, (req, res) => {
 app.delete(BASE_PRA, (req, res) => {
   db_PRA = [];
   res.status(200).json({ message: "Todos los datos borrados." });
+});
+
+app.all(BASE_PRA, (req, res) => {
+  res.status(405).json({ error: "Method Not Allowed" });
 });
 
 // -------- GET por id (200 / 404) ----------
