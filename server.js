@@ -122,7 +122,7 @@ app.get(`${BASE_RDB}/loadInitialData`, (req, res) => {
   });
 });
 
-app.use(BASE_RDB, requireApiKey);
+//app.use(BASE_RDB, requireApiKey);
 
 app.get("/samples/RDB", (req, res) => {
   try {
