@@ -122,7 +122,7 @@ app.get(`${BASE_RDB}/loadInitialData`, (req, res) => {
   });
 });
 
-app.use(BASE_RDB, requireApiKey);
+//app.use(BASE_RDB, requireApiKey);
 
 app.get("/samples/RDB", (req, res) => {
   try {
@@ -461,6 +461,8 @@ app.get(`${BASE_PRA}/loadInitialData`, (req, res) => {
     count: db_PRA.length
   });
 });
+
+//app.use(BASE_PRA, requireApiKey);
 
 // -------- GET colección (200 OK) ----------
 app.get(BASE_PRA, (req, res) => {
