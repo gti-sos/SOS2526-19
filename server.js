@@ -567,3 +567,14 @@ app.delete(`${BASE_PRA}/:id`, (req, res) => {
 app.all(BASE_PRA, (req, res) => {
   res.status(405).json({ error: "Method Not Allowed" });
 });
+
+/* EJEMPLO PARA PROBAR
+
+{
+  "id": 8,
+  "country": "Spain",
+  "from_date": "2020-01-01",
+  "severity_km2": 200
+}
+
+*/
