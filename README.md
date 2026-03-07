@@ -13,3 +13,6 @@
 
 - **APIs**
   - [/cool](https://sos2526-19.onrender.com/cool)
+  - [Pablo](https://sos2526-19.onrender.com/api/v1/drought-stats)
+  - [Raúl](https://sos2526-19.onrender.com/api/v1/workers-productivity)
+  - [Javier](https://sos2526-19.onrender.com/api/v1/earthquakes)

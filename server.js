@@ -503,9 +503,6 @@ app.delete(BASE_PRA, (req, res) => {
   res.status(200).json({ message: "Todos los datos borrados." });
 });
 
-app.all(BASE_PRA, (req, res) => {
-  res.status(405).json({ error: "Method Not Allowed" });
-});
 
 // -------- GET por id (200 / 404) ----------
 app.get(`${BASE_PRA}/:id`, (req, res) => { // ":id" se usa para indicar que hay un parametro en la url que indica el elemento en especifico
@@ -519,6 +516,10 @@ app.get(`${BASE_PRA}/:id`, (req, res) => { // ":id" se usa para indicar que hay 
 app.put(`${BASE_PRA}/:id`, (req, res) => {
   const id = Number(req.params.id);
   const obj = req.body;
+
+  if (obj.id !== undefined && Number(obj.id) !== id) {
+    return res.status(400).json({ error: "Bad Request" });
+  }
 
   const idx = db_PRA.findIndex(x => x.id === id);
   if (idx === -1) return res.status(404).json({ error: "Not Found" });
@@ -561,4 +562,8 @@ app.delete(`${BASE_PRA}/:id`, (req, res) => {
   const deleted = db_PRA[idx];
   db_PRA.splice(idx, 1);
   res.status(200).json({ message: "Elemento eliminado.", deleted });
+});
+
+app.all(BASE_PRA, (req, res) => {
+  res.status(405).json({ error: "Method Not Allowed" });
 });
