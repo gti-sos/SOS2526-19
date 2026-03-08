@@ -1,0 +1,955 @@
+{
+  "info": {
+    "_postman_id": "e96246d9-ea82-414f-9a49-c5365493bcf3",
+    "name": "JMJ Earthquakes API",
+    "description": "Colección completa para probar la API de terremotos JMJ. Cubre todos los métodos, códigos de estado correctos e incorrectos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52414959",
+    "_collection_link": "https://go.postman.co/collection/52414959-e96246d9-ea82-414f-9a49-c5365493bcf3?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "0. Setup",
+      "item": [
+        {
+          "name": "0.1 Load Initial Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 201 or 200\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 200]);",
+                  "});",
+                  "pm.test(\"Response has count\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('count');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/loadInitialData",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "loadInitialData"
+              ]
+            },
+            "description": "Carga los datos iniciales del Excel en la DB en memoria."
+          },
+          "response": []
+        },
+        {
+          "name": "0.2 Load Initial Data (ya cargada → 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200 — DB ya contiene datos\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Mensaje indica que ya hay datos\", function () {",
+                  "    pm.expect(pm.response.json().message).to.include('ya contiene');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/loadInitialData",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "loadInitialData"
+              ]
+            },
+            "description": "Segunda llamada: la DB ya está cargada → 200."
+          },
+          "response": []
+        },
+        {
+          "name": "0.3 Sample — Media Severidad Iran",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Contiene media_severidad numérica\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('media_severidad');",
+                  "    pm.expect(json.media_severidad).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/samples/JMJ?pais=Iran",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "samples",
+                "JMJ"
+              ],
+              "query": [
+                {
+                  "key": "pais",
+                  "value": "Iran"
+                }
+              ]
+            },
+            "description": "Endpoint de muestra: media de severidad por país."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "1. GET Colección",
+      "item": [
+        {
+          "name": "1.1 GET /earthquakes → 200 OK",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Respuesta es un array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "// Guardamos el primer id para pruebas posteriores",
+                  "var arr = pm.response.json();",
+                  "if (arr.length > 0) {",
+                  "    pm.collectionVariables.set('EXISTING_ID', arr[0].id);",
+                  "    pm.collectionVariables.set('EXISTING_COUNTRY', arr[0].country);",
+                  "    pm.collectionVariables.set('EXISTING_FROMDATE', arr[0].fromdate);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ]
+            },
+            "description": "Obtiene todos los terremotos. Guarda el primer id/country/fromdate para pruebas."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. POST Colección",
+      "item": [
+        {
+          "name": "2.1 POST /earthquakes → 201 Created (correcto)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Terremoto creado con id\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.collectionVariables.set('NEW_ID', json.id);",
+                  "    pm.collectionVariables.set('NEW_COUNTRY', json.country);",
+                  "    pm.collectionVariables.set('NEW_FROMDATE', json.fromdate);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"TestLand\",\n  \"fromdate\": \"2024-01-15\",\n  \"todate\": \"2024-01-16\",\n  \"severity\": 6.5,\n  \"alertlevel\": \"Orange\",\n  \"depth\": 10,\n  \"exposed_population\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ]
+            },
+            "description": "Crea un terremoto válido → 201."
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 POST /earthquakes → 400 Bad Request (falta country)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400 — falta country\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Mensaje de error presente\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromdate\": \"2024-02-01\",\n  \"severity\": 5.0\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ]
+            },
+            "description": "Body sin 'country' → 400."
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 POST /earthquakes → 400 Bad Request (severity no numérica)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400 — severity inválida\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"Spain\",\n  \"fromdate\": \"2024-03-01\",\n  \"severity\": \"fuerte\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ]
+            },
+            "description": "severity no es número → 400."
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 POST /earthquakes → 400 Bad Request (body vacío)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400 — body vacío\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ]
+            },
+            "description": "Body sin campos obligatorios → 400."
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 POST /earthquakes → 409 Conflict (duplicado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 409 — terremoto duplicado\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "pm.test(\"Mensaje de conflicto presente\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"TestLand\",\n  \"fromdate\": \"2024-01-15\",\n  \"todate\": \"2024-01-16\",\n  \"severity\": 6.5,\n  \"alertlevel\": \"Orange\",\n  \"depth\": 10,\n  \"exposed_population\": 50000\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ]
+            },
+            "description": "Mismo country + fromdate que 2.1 → 409."
+          },
+          "response": []
+        },
+        {
+          "name": "2.6 POST /earthquakes → 405 Method Not Allowed (PUT colección)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 405 — PUT no permitido en colección\", function () {",
+                  "    pm.response.to.have.status(405);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"Spain\",\n  \"fromdate\": \"2024-05-01\",\n  \"severity\": 4.0\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ]
+            },
+            "description": "PUT sobre la colección → 405."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. GET por ID",
+      "item": [
+        {
+          "name": "3.1 GET /earthquakes/:id → 200 OK (id existente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Devuelve array con el elemento\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/2",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "2"
+              ]
+            },
+            "description": "GET de un id que existe → 200."
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 GET /earthquakes/:id → 404 Not Found (id inexistente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 404 — id inexistente\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Error en respuesta\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/999999",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "999999"
+              ]
+            },
+            "description": "GET de un id que no existe → 404."
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 POST /earthquakes/:id → 405 Method Not Allowed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 405 — POST en recurso específico no permitido\", function () {",
+                  "    pm.response.to.have.status(405);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"Iran\",\n  \"fromdate\": 36570,\n  \"severity\": 4.9\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                ""
+              ]
+            },
+            "description": "POST sobre un recurso específico → 405."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. PUT por ID",
+      "item": [
+        {
+          "name": "4.1 PUT /earthquakes/:id → 200 OK (correcto)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Recurso actualizado correctamente\", function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.country).to.eql('TestLand');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"TestLand\",\n  \"fromdate\": \"2024-01-15\",\n  \"todate\": \"2024-01-17\",\n  \"severity\": 7.2,\n  \"alertlevel\": \"Red\",\n  \"depth\": 15,\n  \"exposed_population\": 80000\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/{{NEW_ID}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "{{NEW_ID}}"
+              ]
+            },
+            "description": "PUT válido sobre el recurso creado en 2.1 → 200."
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 PUT /earthquakes/:id → 400 Bad Request (body inválido — falta fromdate)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400 — falta fromdate\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"TestLand\",\n  \"severity\": 5.0\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/{{NEW_ID}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "{{NEW_ID}}"
+              ]
+            },
+            "description": "Body sin 'fromdate' → 400."
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 PUT /earthquakes/:id → 400 Bad Request (severity no numérica)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 400 — severity no válida\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"TestLand\",\n  \"fromdate\": \"2024-01-15\",\n  \"severity\": \"muy fuerte\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/{{NEW_ID}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "{{NEW_ID}}"
+              ]
+            },
+            "description": "Severity no numérica → 400."
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 PUT /earthquakes/:id → 404 Not Found (id inexistente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 404 — id no existe\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"TestLand\",\n  \"fromdate\": \"2024-01-15\",\n  \"severity\": 5.0\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/999999",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "999999"
+              ]
+            },
+            "description": "PUT sobre id que no existe → 404."
+          },
+          "response": []
+        },
+        {
+          "name": "4.5 PUT /earthquakes/:id → 409 Conflict (country+fromdate ya existe en otro registro)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 409 — conflicto de datos\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"{{EXISTING_COUNTRY}}\",\n  \"fromdate\": \"{{EXISTING_FROMDATE}}\",\n  \"severity\": 5.5\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/{{NEW_ID}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "{{NEW_ID}}"
+              ]
+            },
+            "description": "Intenta asignar country+fromdate ya usados por otro registro → 409."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. DELETE por ID",
+      "item": [
+        {
+          "name": "5.1 DELETE /earthquakes/:id → 200 OK (id existente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Elemento eliminado en respuesta\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('deleted');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/11",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "11"
+              ]
+            },
+            "description": "Elimina el recurso creado en 2.1 → 200."
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 DELETE /earthquakes/:id → 404 Not Found (id ya eliminado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 404 — id ya no existe\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/999999",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "999999"
+              ]
+            },
+            "description": "Segundo intento de borrar el mismo id → 404."
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 DELETE /earthquakes/:id → 404 Not Found (id inexistente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 404 — id nunca existió\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/999999",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ],
+              "path": [
+                "999999"
+              ]
+            },
+            "description": "DELETE de id 999999 que nunca existió → 404."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. DELETE Colección",
+      "item": [
+        {
+          "name": "6.1 DELETE /earthquakes → 200 OK (borrar todo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Mensaje de borrado\", function () {",
+                  "    pm.expect(pm.response.json().message).to.include('borrados');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ]
+            },
+            "description": "Borra toda la colección → 200."
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 GET /earthquakes → 200 OK (colección vacía)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Colección vacía tras DELETE\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array').that.is.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "host": [
+                "{{BASE_URL}}{{BASE_JMJ}}"
+              ]
+            },
+            "description": "Verifica que la colección está vacía tras el DELETE masivo."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "https://TU-APP.onrender.com"
+    },
+    {
+      "key": "BASE_JMJ",
+      "value": "/api/v1/earthquakes"
+    },
+    {
+      "key": "EXISTING_ID",
+      "value": ""
+    },
+    {
+      "key": "EXISTING_COUNTRY",
+      "value": ""
+    },
+    {
+      "key": "EXISTING_FROMDATE",
+      "value": ""
+    }
+  ]
+}
