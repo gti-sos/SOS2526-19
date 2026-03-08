@@ -323,7 +323,7 @@ app.post(BASE_JMJ, (req, res) => {
     return res.status(400).json({ error: "Bad Request" });
   }
 
-  const c = db_JMJ.filter(x => x.pais === obj.pais && x.fechaInicio === obj.fechaInicio);
+  const c = db_JMJ.find(x => x.pais === obj.pais && x.fechaInicio === obj.fechaInicio);
   if (c.length > 0) return res.status(409).json({ error: `Ya existe un terremoto en ${c.pais} con fecha ${c.fechaInicio}` });
 
   const nuevo_id = db_JMJ.length > 0 ? Math.max(...db_JMJ.map(x => x.id)) + 1 : 1;
@@ -356,7 +356,7 @@ app.put(BASE_JMJ, (req, res) => {
 // -------- GET por id (200 / 404) ----------
 app.get(`${BASE_JMJ}/:id`, (req, res) => { // ":id" se usa para indicar que hay un parametro en la url que indica el elemento en especifico
   const id = Number(req.params.id);
-  const item = db_JMJ.filter(x => x.id === id);
+  const item = db_JMJ.find(x => x.id === id);
   if (!item) return res.status(404).json({ error: `No se ha encontrado el objeto ${id}.` });
   res.status(200).json(item);
 });
