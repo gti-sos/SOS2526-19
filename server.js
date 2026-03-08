@@ -324,7 +324,7 @@ app.post(BASE_JMJ, (req, res) => {
   }
 
   const c = db_JMJ.filter(x => x.pais === obj.pais && x.fechaInicio === obj.fechaInicio);
-  if (c.length > 0) return res.status(409).json({ error: `Ya existe un terrmoto en ${obj.pais} con fecha ${obj.fechaInicio}` });
+  if (c.length > 0) return res.status(409).json({ error: `Ya existe un terremoto en ${c.pais} con fecha ${c.fechaInicio}` });
 
   const nuevo_id = db_JMJ.length > 0 ? Math.max(...db_JMJ.map(x => x.id)) + 1 : 1;
   const nuevoTerremoto = {
