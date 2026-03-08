@@ -307,8 +307,9 @@ app.get(`${BASE_JMJ}/loadInitialData`, (req, res) => {
   });
 });
 
-app.use(BASE_JMJ, requireApiKey);
+// app.use(BASE_JMJ, requireApiKey);
 
+// ---------------- COLECCIONES ----------------//
 // -------- GET colección (200 OK) ----------
 app.get(BASE_JMJ, (req, res) => {
   res.status(200).json(db_JMJ);
@@ -347,6 +348,11 @@ app.delete(BASE_JMJ, (req, res) => {
   res.status(200).json({ message: "Todos los datos borrados." });
 });
 
+app.put(BASE_JMJ, (req, res) => {
+  res.status(405).json({error: `No se puede editar completamente la DB de JMJ.`})
+});
+
+//---------------- ID ESPECIFICO ----------------//
 // -------- GET por id (200 / 404) ----------
 app.get(`${BASE_JMJ}/:id`, (req, res) => { // ":id" se usa para indicar que hay un parametro en la url que indica el elemento en especifico
   const id = Number(req.params.id);
@@ -361,16 +367,9 @@ app.put(`${BASE_JMJ}/:id`, (req, res) => {
   const obj = req.body;
 
   const idx = db_JMJ.findIndex(x => x.id === id);
-  if (idx === -1) return res.status(404).json({ error: "Not Found" });
+  if (idx === -1) return res.status(404).json({ error: `No existe el objeto ${id}.` });
 
-  if (
-    !obj ||
-    typeof obj.country !== "string" ||
-    obj.country.trim().length === 0 ||
-    !obj.fromdate ||
-    obj.severity === undefined ||
-    !Number.isFinite(Number(obj.severity))
-  ) {
+  if (!obj || typeof obj.country !== "string" || obj.country.trim().length === 0 || !obj.fromdate || obj.severity === undefined || !Number.isFinite(Number(obj.severity))) {
     return res.status(400).json({ error: "Bad Request" });
   }
 
@@ -400,6 +399,10 @@ app.delete(`${BASE_JMJ}/:id`, (req, res) => {
   const deleted = db_JMJ[idx];
   db_JMJ.splice(idx, 1);
   res.status(200).json({ message: "Elemento eliminado.", deleted });
+});
+
+app.post(`${BASE_JMJ}/:id`, (req, res) => {
+  res.status(405).json({error: `No se puede crear un elemento nuevo en la DB de JMJ.`})
 });
 
 //=======================================//
