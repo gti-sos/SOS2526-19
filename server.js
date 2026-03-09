@@ -114,7 +114,7 @@ app.get(`${BASE_RDB}/loadInitialData`, (req, res) => {
     { country: "Cambodia", year: 1999, productivity_hour: 718.3701884 }
   ];
 
-  db_RDB = initial.map((x, i) => ({ id: i + 1, ...x }));
+  db_RDB = initial.map((x) => ({ id: nextId_RDB++, ...x }));
 
   return res.status(201).json({
     message: "La db ha sido inicializada con 10 datos.",
@@ -143,19 +143,25 @@ app.get("/samples/RDB", (req, res) => {
   }
 });
 
-// -------- GET colección (200 OK) ----------
+// -------- GET colección o filtrada por country/year (200 OK) ----------
 app.get(BASE_RDB, (req, res) => {
-  res.status(200).json(db_RDB);
-});
+  let result = db_RDB;
 
-// -------- GET por id (200 OK / 404 Not Found) ----------
-app.get(`${BASE_RDB}/:id`, (req, res) => {
-  const id = Number(req.params.id);
-  const item = db_RDB.find((x) => x.id === id);
+  if (req.query.country) {
+    result = result.filter(x => x.country === req.query.country);
+  }
 
-  if (!item) return res.status(404).json({ error: "Not Found" });
+  if (req.query.year) {
+    const year = Number(req.query.year);
 
-  res.status(200).json(item);
+    if (!Number.isInteger(year)) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    result = result.filter(x => x.year === year);
+  }
+
+  res.status(200).json(result);
 });
 
 // -------- POST crear (201 Created / 400 Bad Request / 409 Conflict) ----------
@@ -177,7 +183,9 @@ app.post(BASE_RDB, (req, res) => {
     return res.status(400).json({ error: "Bad Request" });
   }
 
-  const exists = db_RDB.some((x) => x.country === obj.country && x.year === obj.year);
+  const exists = db_RDB.some(
+    (x) => x.country === obj.country && x.year === obj.year
+  );
   if (exists) return res.status(409).json({ error: "Conflict" });
 
   const created = {
@@ -191,12 +199,21 @@ app.post(BASE_RDB, (req, res) => {
   res.status(201).json(created);
 });
 
-// -------- PUT reemplazar por id (200 OK / 400 / 404 / 409) ----------
-app.put(`${BASE_RDB}/:id`, (req, res) => {
-  const id = Number(req.params.id);
+// -------- PUT por country y year (200 OK / 400 / 404 / 409) ----------
+// Ejemplo:
+// PUT /api/v1/workers-productivity?country=Spain&year=1995
+app.put(BASE_RDB, (req, res) => {
+  const country = req.query.country;
+  const year = Number(req.query.year);
   const obj = req.body;
 
-  const idx = db_RDB.findIndex((x) => x.id === id);
+  if (!country || !Number.isInteger(year)) {
+    return res.status(400).json({ error: "Bad Request" });
+  }
+
+  const idx = db_RDB.findIndex(
+    (x) => x.country === country && x.year === year
+  );
   if (idx === -1) return res.status(404).json({ error: "Not Found" });
 
   if (
@@ -214,17 +231,47 @@ app.put(`${BASE_RDB}/:id`, (req, res) => {
     return res.status(400).json({ error: "Bad Request" });
   }
 
-  const conflict = db_RDB.some((x) => x.id !== id && x.country === obj.country && x.year === obj.year);
+  const conflict = db_RDB.some(
+    (x, i) =>
+      i !== idx &&
+      x.country === obj.country &&
+      x.year === obj.year
+  );
   if (conflict) return res.status(409).json({ error: "Conflict" });
 
-  db_RDB[idx] = { id, country: obj.country, year: obj.year, productivity_hour: ph };
+  db_RDB[idx] = {
+    id: db_RDB[idx].id,
+    country: obj.country,
+    year: obj.year,
+    productivity_hour: ph
+  };
+
   res.status(200).json(db_RDB[idx]);
 });
 
-// -------- DELETE por id (200 OK / 404 Not Found) ----------
-app.delete(`${BASE_RDB}/:id`, (req, res) => {
-  const id = Number(req.params.id);
-  const idx = db_RDB.findIndex((x) => x.id === id);
+// -------- DELETE por country y year (200 OK / 400 / 404) ----------
+// Ejemplo:
+// DELETE /api/v1/workers-productivity?country=Spain&year=1995
+app.delete(BASE_RDB, (req, res) => {
+  const country = req.query.country;
+  const yearParam = req.query.year;
+
+  // Si no vienen parámetros -> borrar colección completa
+  if (!country && !yearParam) {
+    db_RDB = [];
+    nextId_RDB = 1;
+    return res.status(200).json({ message: "All deleted" });
+  }
+
+  const year = Number(yearParam);
+
+  if (!country || !Number.isInteger(year)) {
+    return res.status(400).json({ error: "Bad Request" });
+  }
+
+  const idx = db_RDB.findIndex(
+    (x) => x.country === country && x.year === year
+  );
 
   if (idx === -1) return res.status(404).json({ error: "Not Found" });
 
@@ -234,18 +281,12 @@ app.delete(`${BASE_RDB}/:id`, (req, res) => {
   res.status(200).json({ message: "Deleted", deleted });
 });
 
-// -------- DELETE colección (200 OK) ----------
-app.delete(BASE_RDB, (req, res) => {
-  db_RDB = [];
-  nextId_RDB = 1;
-  res.status(200).json({ message: "All deleted" });
-});
-
+// -------- 405 Method Not Allowed ----------
 app.all(BASE_RDB, (req, res) => {
   res.status(405).json({ error: "Method Not Allowed" });
 });
 
-app.all(`${BASE_RDB}/:id`, (req, res) => {
+app.all(`${BASE_RDB}/:anything`, (req, res) => {
   res.status(405).json({ error: "Method Not Allowed" });
 });}
 
