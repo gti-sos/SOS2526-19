@@ -122,8 +122,6 @@ app.get(`${BASE_RDB}/loadInitialData`, (req, res) => {
   });
 });
 
-//app.use(BASE_RDB, requireApiKey);
-
 app.get("/samples/RDB", (req, res) => {
   try {
     const country = req.query.country || "Spain";
@@ -143,12 +141,17 @@ app.get("/samples/RDB", (req, res) => {
   }
 });
 
-// -------- GET colección con filtros opcionales por query ----------
+//=======================================//
+//================= GET =================//
+//=======================================//
+
+// GET colección completa o filtrada
 // Ejemplos:
 // /api/v1/workers-productivity
 // /api/v1/workers-productivity?country=Spain
 // /api/v1/workers-productivity?year=1995
-// /api/v1/workers-productivity?country=Spain&year=1995
+// /api/v1/workers-productivity?from=1995&to=1997
+// /api/v1/workers-productivity?country=Spain&from=1995&to=1997
 app.get(BASE_RDB, (req, res) => {
   let result = db_RDB;
 
@@ -166,35 +169,50 @@ app.get(BASE_RDB, (req, res) => {
     result = result.filter(x => x.year === year);
   }
 
-  res.status(200).json(result);
+  if (req.query.from || req.query.to) {
+    const from = Number(req.query.from);
+    const to = Number(req.query.to);
+
+    if (!Number.isInteger(from) || !Number.isInteger(to)) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    result = result.filter(x => x.year >= from && x.year <= to);
+  }
+
+  // Si no hay resultados, devuelve []
+  return res.status(200).json(result);
 });
 
-// -------- GET filtrado por un solo parámetro ----------
+// GET por country, con o sin rango
 // Ejemplos:
 // /api/v1/workers-productivity/Spain
-// /api/v1/workers-productivity/1995
-app.get(`${BASE_RDB}/:value`, (req, res) => {
-  const value = req.params.value;
-  let result = [];
+// /api/v1/workers-productivity/Spain?from=1995&to=1997
+app.get(`${BASE_RDB}/:country`, (req, res, next) => {
+  const country = req.params.country;
 
-  // Si el parámetro es un número entero, lo interpretamos como year
-  const possibleYear = Number(value);
-
-  if (Number.isInteger(possibleYear)) {
-    result = db_RDB.filter(x => x.year === possibleYear);
-  } else {
-    // Si no es número, lo interpretamos como country
-    result = db_RDB.filter(x => x.country === value);
+  // Si el parámetro parece un año, no entramos aquí
+  if (/^\d+$/.test(country)) {
+    return next();
   }
 
-  if (result.length === 0) {
-    return res.status(404).json({ error: "Not Found" });
+  let result = db_RDB.filter(x => x.country === country);
+
+  if (req.query.from || req.query.to) {
+    const from = Number(req.query.from);
+    const to = Number(req.query.to);
+
+    if (!Number.isInteger(from) || !Number.isInteger(to)) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    result = result.filter(x => x.year >= from && x.year <= to);
   }
 
-  res.status(200).json(result);
+  return res.status(200).json(result);
 });
 
-// -------- GET recurso único por country y year ----------
+// GET recurso único
 // Ejemplo:
 // /api/v1/workers-productivity/Spain/1995
 app.get(`${BASE_RDB}/:country/:year`, (req, res) => {
@@ -206,18 +224,20 @@ app.get(`${BASE_RDB}/:country/:year`, (req, res) => {
   }
 
   const item = db_RDB.find(
-    (x) => x.country === country && x.year === year
+    x => x.country === country && x.year === year
   );
 
   if (!item) {
     return res.status(404).json({ error: "Not Found" });
   }
 
-  res.status(200).json(item);
+  return res.status(200).json(item);
 });
 
-// -------- POST crear ----------
-// POST /api/v1/workers-productivity
+//=======================================//
+//================ POST =================//
+//=======================================//
+
 app.post(BASE_RDB, (req, res) => {
   const obj = req.body;
 
@@ -237,7 +257,7 @@ app.post(BASE_RDB, (req, res) => {
   }
 
   const exists = db_RDB.some(
-    (x) => x.country === obj.country && x.year === obj.year
+    x => x.country === obj.country && x.year === obj.year
   );
 
   if (exists) {
@@ -252,10 +272,15 @@ app.post(BASE_RDB, (req, res) => {
   };
 
   db_RDB.push(created);
-  res.status(201).json(created);
+
+  // Como en tu ejemplo, 201 sin datos
+  return res.status(201).send();
 });
 
-// -------- PUT recurso único por country y year ----------
+//=======================================//
+//================= PUT =================//
+//=======================================//
+
 // Ejemplo:
 // PUT /api/v1/workers-productivity/Spain/1995
 app.put(`${BASE_RDB}/:country/:year`, (req, res) => {
@@ -268,7 +293,7 @@ app.put(`${BASE_RDB}/:country/:year`, (req, res) => {
   }
 
   const idx = db_RDB.findIndex(
-    (x) => x.country === country && x.year === year
+    x => x.country === country && x.year === year
   );
 
   if (idx === -1) {
@@ -290,15 +315,9 @@ app.put(`${BASE_RDB}/:country/:year`, (req, res) => {
     return res.status(400).json({ error: "Bad Request" });
   }
 
-  const conflict = db_RDB.some(
-    (x, i) =>
-      i !== idx &&
-      x.country === obj.country &&
-      x.year === obj.year
-  );
-
-  if (conflict) {
-    return res.status(409).json({ error: "Conflict" });
+  // Comprobación de coherencia entre URL y body
+  if (obj.country !== country || obj.year !== year) {
+    return res.status(400).json({ error: "Bad Request" });
   }
 
   db_RDB[idx] = {
@@ -308,12 +327,15 @@ app.put(`${BASE_RDB}/:country/:year`, (req, res) => {
     productivity_hour: ph
   };
 
-  res.status(200).json(db_RDB[idx]);
+  // Como en tu ejemplo, 200 sin datos
+  return res.status(200).send();
 });
 
-// -------- DELETE recurso único por country y year ----------
-// Ejemplo:
-// DELETE /api/v1/workers-productivity/Spain/1995
+//=======================================//
+//=============== DELETE ================//
+//=======================================//
+
+// DELETE recurso concreto
 app.delete(`${BASE_RDB}/:country/:year`, (req, res) => {
   const country = req.params.country;
   const year = Number(req.params.year);
@@ -323,28 +345,33 @@ app.delete(`${BASE_RDB}/:country/:year`, (req, res) => {
   }
 
   const idx = db_RDB.findIndex(
-    (x) => x.country === country && x.year === year
+    x => x.country === country && x.year === year
   );
 
   if (idx === -1) {
     return res.status(404).json({ error: "Not Found" });
   }
 
-  const deleted = db_RDB[idx];
   db_RDB.splice(idx, 1);
-
-  res.status(200).json({ message: "Deleted", deleted });
+  return res.status(200).send();
 });
 
-// -------- DELETE colección completa ----------
+// DELETE colección completa
 app.delete(BASE_RDB, (req, res) => {
   db_RDB = [];
   nextId_RDB = 1;
-  res.status(200).json({ message: "All deleted" });
+  return res.status(200).send();
 });
 
-// -------- 405 Method Not Allowed ----------
+//=======================================//
+//================ 405 ==================//
+//=======================================//
+
 app.all(BASE_RDB, (req, res) => {
+  res.status(405).json({ error: "Method Not Allowed" });
+});
+
+app.all(`${BASE_RDB}/:country`, (req, res) => {
   res.status(405).json({ error: "Method Not Allowed" });
 });
 
