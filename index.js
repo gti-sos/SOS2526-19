@@ -169,6 +169,31 @@ app.get(BASE_RDB, (req, res) => {
   res.status(200).json(result);
 });
 
+// -------- GET filtrado por un solo parámetro ----------
+// Ejemplos:
+// /api/v1/workers-productivity/Spain
+// /api/v1/workers-productivity/1995
+app.get(`${BASE_RDB}/:value`, (req, res) => {
+  const value = req.params.value;
+  let result = [];
+
+  // Si el parámetro es un número entero, lo interpretamos como year
+  const possibleYear = Number(value);
+
+  if (Number.isInteger(possibleYear)) {
+    result = db_RDB.filter(x => x.year === possibleYear);
+  } else {
+    // Si no es número, lo interpretamos como country
+    result = db_RDB.filter(x => x.country === value);
+  }
+
+  if (result.length === 0) {
+    return res.status(404).json({ error: "Not Found" });
+  }
+
+  res.status(200).json(result);
+});
+
 // -------- GET recurso único por country y year ----------
 // Ejemplo:
 // /api/v1/workers-productivity/Spain/1995
