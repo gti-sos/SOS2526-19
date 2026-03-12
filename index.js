@@ -79,6 +79,11 @@ const BASE_RDB = "/api/v1/workers-productivity";
 let db_RDB = [];
 let nextId_RDB = 1;
 
+// RDB - Documentación Postman
+app.get(BASE_API_RDB + "/docs", (req, res) => {
+    res.redirect("https://documenter.getpostman.com/view/52424600/2sBXigKYBq");
+});
+
 function meanByCountry_RDB(rows, countryValue, field) {
   const subset = rows.filter(r => r.country === countryValue);
 
@@ -121,6 +126,8 @@ app.get(`${BASE_RDB}/loadInitialData`, (req, res) => {
     count: db_RDB.length
   });
 });
+
+// app.use(BASE_RDB, requireApiKey);
 
 app.get("/samples/RDB", (req, res) => {
   try {
