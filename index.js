@@ -3,6 +3,7 @@
 //============ IMPORTS ============//
 const express = require("express"); // framework para microservicios que permite filtrar el protocolo http y establecer el comportamiento del microsevicio con él
 const xlsx = require("xlsx");
+const path = require("path");
 
 const cool = require("cool-ascii-faces");
 
@@ -12,6 +13,7 @@ const { marked } = require("marked");
 //============ INICIAR LA APP WEB ============//
 const app = express(); // definimos la app con express
 app.use(express.json()); // parsea toda peticion de la app a formato JSON
+app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = process.env.PORT || 3000; // Render te da el puerto en process.env.PORT
 const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
