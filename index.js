@@ -80,7 +80,7 @@ let db_RDB = [];
 let nextId_RDB = 1;
 
 // RDB - Documentación Postman
-app.get(BASE_API_RDB + "/docs", (req, res) => {
+app.get(BASE_RDB + "/docs", (req, res) => {
     res.redirect("https://documenter.getpostman.com/view/52424600/2sBXigKYBq");
 });
 
