@@ -4,7 +4,7 @@
 const express = require("express"); // framework para microservicios que permite filtrar el protocolo http y establecer el comportamiento del microsevicio con él
 const xlsx = require("xlsx");
 const path = require("path");
-const Datastore = require("nedb");
+const Datastore = require("@seald-io/nedb");
 
 const cool = require("cool-ascii-faces");
 

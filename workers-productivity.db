@@ -1,0 +1,3 @@
+{"id":1,"country":"France","year":2000,"productivity_hour":777.7,"key":"France-2000","_id":"56SVPgR7vt1E4jKf"}
+{"$$indexCreated":{"fieldName":"key","unique":true,"sparse":false}}
+{"$$indexCreated":{"fieldName":"key","unique":true}}
