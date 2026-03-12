@@ -4,6 +4,7 @@
 const express = require("express"); // framework para microservicios que permite filtrar el protocolo http y establecer el comportamiento del microsevicio con él
 const xlsx = require("xlsx");
 const path = require("path");
+const Datastore = require("nedb");
 
 const cool = require("cool-ascii-faces");
 
@@ -77,13 +78,18 @@ app.get("/about", (req, res) => {
 {//=======================================//
 //============ FUNCIONES RDB ============//
 //=======================================//
-const BASE_RDB = "/api/v1/workers-productivity";
-let db_RDB = [];
-let nextId_RDB = 1;
 
-// RDB - Documentación Postman
-app.get(BASE_RDB + "/docs", (req, res) => {
-    res.redirect("https://documenter.getpostman.com/view/52424600/2sBXigKYBq");
+const BASE_RDB = "/api/v1/workers-productivity";
+
+const db_RDB = new Datastore({
+  filename: "workers-productivity.db",
+  autoload: true
+});
+
+db_RDB.ensureIndex({ fieldName: "key", unique: true }, (err) => {
+  if (err) {
+    console.error("Error creating NeDB index for RDB:", err);
+  }
 });
 
 function meanByCountry_RDB(rows, countryValue, field) {
@@ -99,34 +105,111 @@ function meanByCountry_RDB(rows, countryValue, field) {
   return sum / values.length;
 }
 
-app.get(`${BASE_RDB}/loadInitialData`, (req, res) => {
-  if (db_RDB.length > 0) {
-    return res.status(200).json({
-      message: "La db contiene datos.",
-      count: db_RDB.length
+// ========= Helpers NeDB =========
+function rdbFind(query = {}, projection = { _id: 0, key: 0 }) {
+  return new Promise((resolve, reject) => {
+    db_RDB.find(query, projection, (err, docs) => {
+      if (err) return reject(err);
+      resolve(docs);
     });
-  }
-
-  const initial = [
-    { country: "Spain", year: 1995, productivity_hour: 570.84 },
-    { country: "Spain", year: 1996, productivity_hour: 589.7068541 },
-    { country: "Spain", year: 1997, productivity_hour: 631.27836 },
-    { country: "Spain", year: 1998, productivity_hour: 669.8616643 },
-    { country: "Spain", year: 1999, productivity_hour: 696.8961129 },
-
-    { country: "Cambodia", year: 1995, productivity_hour: 699.8581194 },
-    { country: "Cambodia", year: 1996, productivity_hour: 663.1780142 },
-    { country: "Cambodia", year: 1997, productivity_hour: 686.4500003 },
-    { country: "Cambodia", year: 1998, productivity_hour: 654.9528481 },
-    { country: "Cambodia", year: 1999, productivity_hour: 718.3701884 }
-  ];
-
-  db_RDB = initial.map((x) => ({ id: nextId_RDB++, ...x }));
-
-  return res.status(201).json({
-    message: "La db ha sido inicializada con 10 datos.",
-    count: db_RDB.length
   });
+}
+
+function rdbFindOne(query = {}, projection = { _id: 0, key: 0 }) {
+  return new Promise((resolve, reject) => {
+    db_RDB.findOne(query, projection, (err, doc) => {
+      if (err) return reject(err);
+      resolve(doc);
+    });
+  });
+}
+
+function rdbInsert(doc) {
+  return new Promise((resolve, reject) => {
+    db_RDB.insert(doc, (err, newDoc) => {
+      if (err) return reject(err);
+      resolve(newDoc);
+    });
+  });
+}
+
+function rdbCount(query = {}) {
+  return new Promise((resolve, reject) => {
+    db_RDB.count(query, (err, n) => {
+      if (err) return reject(err);
+      resolve(n);
+    });
+  });
+}
+
+function rdbUpdate(query, update, options = {}) {
+  return new Promise((resolve, reject) => {
+    db_RDB.update(query, update, options, (err, numReplaced) => {
+      if (err) return reject(err);
+      resolve(numReplaced);
+    });
+  });
+}
+
+function rdbRemove(query, options = {}) {
+  return new Promise((resolve, reject) => {
+    db_RDB.remove(query, options, (err, numRemoved) => {
+      if (err) return reject(err);
+      resolve(numRemoved);
+    });
+  });
+}
+
+async function rdbNextId() {
+  const docs = await rdbFind({}, { id: 1, _id: 0 });
+  const maxId = docs.reduce((max, d) => {
+    const current = Number(d.id) || 0;
+    return current > max ? current : max;
+  }, 0);
+
+  return maxId + 1;
+}
+
+// ========= Load initial data =========
+app.get(`${BASE_RDB}/loadInitialData`, async (req, res) => {
+  try {
+    const count = await rdbCount({});
+
+    if (count > 0) {
+      return res.status(200).json({
+        message: "La db contiene datos.",
+        count
+      });
+    }
+
+    const initial = [
+      { id: 1, country: "Spain", year: 1995, productivity_hour: 570.84 },
+      { id: 2, country: "Spain", year: 1996, productivity_hour: 589.7068541 },
+      { id: 3, country: "Spain", year: 1997, productivity_hour: 631.27836 },
+      { id: 4, country: "Spain", year: 1998, productivity_hour: 669.8616643 },
+      { id: 5, country: "Spain", year: 1999, productivity_hour: 696.8961129 },
+
+      { id: 6, country: "Cambodia", year: 1995, productivity_hour: 699.8581194 },
+      { id: 7, country: "Cambodia", year: 1996, productivity_hour: 663.1780142 },
+      { id: 8, country: "Cambodia", year: 1997, productivity_hour: 686.4500003 },
+      { id: 9, country: "Cambodia", year: 1998, productivity_hour: 654.9528481 },
+      { id: 10, country: "Cambodia", year: 1999, productivity_hour: 718.3701884 }
+    ];
+
+    for (const item of initial) {
+      await rdbInsert({
+        ...item,
+        key: `${item.country}-${item.year}`
+      });
+    }
+
+    return res.status(201).json({
+      message: "La db ha sido inicializada con 10 datos.",
+      count: initial.length
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
 });
 
 // app.use(BASE_RDB, requireApiKey);
@@ -154,222 +237,237 @@ app.get("/samples/RDB", (req, res) => {
 //================= GET =================//
 //=======================================//
 
-// GET colección completa o filtrada
-// Ejemplos:
-// /api/v1/workers-productivity
-// /api/v1/workers-productivity?country=Spain
-// /api/v1/workers-productivity?year=1995
-// /api/v1/workers-productivity?from=1995&to=1997
-// /api/v1/workers-productivity?country=Spain&from=1995&to=1997
-app.get(BASE_RDB, (req, res) => {
-  let result = db_RDB;
+app.get(BASE_RDB, async (req, res) => {
+  try {
+    const query = {};
 
-  if (req.query.country) {
-    result = result.filter(x => x.country === req.query.country);
+    if (req.query.country) {
+      query.country = req.query.country;
+    }
+
+    if (req.query.year) {
+      const year = Number(req.query.year);
+
+      if (!Number.isInteger(year)) {
+        return res.status(400).json({ error: "Bad Request" });
+      }
+
+      query.year = year;
+    }
+
+    if (req.query.from || req.query.to) {
+      const from = Number(req.query.from);
+      const to = Number(req.query.to);
+
+      if (!Number.isInteger(from) || !Number.isInteger(to)) {
+        return res.status(400).json({ error: "Bad Request" });
+      }
+
+      query.year = { $gte: from, $lte: to };
+    }
+
+    const result = await rdbFind(query);
+    result.sort((a, b) => a.year - b.year);
+
+    return res.status(200).json(result);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
   }
+});
 
-  if (req.query.year) {
-    const year = Number(req.query.year);
+// GET por country, con o sin rango
+app.get(`${BASE_RDB}/:country`, async (req, res, next) => {
+  try {
+    const country = req.params.country;
+
+    if (/^\d+$/.test(country)) {
+      return next();
+    }
+
+    const query = { country };
+
+    if (req.query.from || req.query.to) {
+      const from = Number(req.query.from);
+      const to = Number(req.query.to);
+
+      if (!Number.isInteger(from) || !Number.isInteger(to)) {
+        return res.status(400).json({ error: "Bad Request" });
+      }
+
+      query.year = { $gte: from, $lte: to };
+    }
+
+    const result = await rdbFind(query);
+    result.sort((a, b) => a.year - b.year);
+
+    return res.status(200).json(result);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// GET recurso único
+app.get(`${BASE_RDB}/:country/:year`, async (req, res) => {
+  try {
+    const country = req.params.country;
+    const year = Number(req.params.year);
 
     if (!Number.isInteger(year)) {
       return res.status(400).json({ error: "Bad Request" });
     }
 
-    result = result.filter(x => x.year === year);
-  }
+    const item = await rdbFindOne({ country, year });
 
-  if (req.query.from || req.query.to) {
-    const from = Number(req.query.from);
-    const to = Number(req.query.to);
-
-    if (!Number.isInteger(from) || !Number.isInteger(to)) {
-      return res.status(400).json({ error: "Bad Request" });
+    if (!item) {
+      return res.status(404).json({ error: "Not Found" });
     }
 
-    result = result.filter(x => x.year >= from && x.year <= to);
+    return res.status(200).json(item);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
   }
-
-  // Si no hay resultados, devuelve []
-  return res.status(200).json(result);
-});
-
-// GET por country, con o sin rango
-// Ejemplos:
-// /api/v1/workers-productivity/Spain
-// /api/v1/workers-productivity/Spain?from=1995&to=1997
-app.get(`${BASE_RDB}/:country`, (req, res, next) => {
-  const country = req.params.country;
-
-  // Si el parámetro parece un año, no entramos aquí
-  if (/^\d+$/.test(country)) {
-    return next();
-  }
-
-  let result = db_RDB.filter(x => x.country === country);
-
-  if (req.query.from || req.query.to) {
-    const from = Number(req.query.from);
-    const to = Number(req.query.to);
-
-    if (!Number.isInteger(from) || !Number.isInteger(to)) {
-      return res.status(400).json({ error: "Bad Request" });
-    }
-
-    result = result.filter(x => x.year >= from && x.year <= to);
-  }
-
-  return res.status(200).json(result);
-});
-
-// GET recurso único
-// Ejemplo:
-// /api/v1/workers-productivity/Spain/1995
-app.get(`${BASE_RDB}/:country/:year`, (req, res) => {
-  const country = req.params.country;
-  const year = Number(req.params.year);
-
-  if (!Number.isInteger(year)) {
-    return res.status(400).json({ error: "Bad Request" });
-  }
-
-  const item = db_RDB.find(
-    x => x.country === country && x.year === year
-  );
-
-  if (!item) {
-    return res.status(404).json({ error: "Not Found" });
-  }
-
-  return res.status(200).json(item);
 });
 
 //=======================================//
 //================ POST =================//
 //=======================================//
 
-app.post(BASE_RDB, (req, res) => {
-  const obj = req.body;
+app.post(BASE_RDB, async (req, res) => {
+  try {
+    const obj = req.body;
 
-  if (
-    !obj ||
-    typeof obj.country !== "string" ||
-    obj.country.trim().length === 0 ||
-    !Number.isInteger(obj.year) ||
-    obj.productivity_hour === undefined
-  ) {
-    return res.status(400).json({ error: "Bad Request" });
+    if (
+      !obj ||
+      typeof obj.country !== "string" ||
+      obj.country.trim().length === 0 ||
+      !Number.isInteger(obj.year) ||
+      obj.productivity_hour === undefined
+    ) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    const ph = Number(obj.productivity_hour);
+    if (!Number.isFinite(ph)) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    const created = {
+      id: await rdbNextId(),
+      country: obj.country,
+      year: obj.year,
+      productivity_hour: ph,
+      key: `${obj.country}-${obj.year}`
+    };
+
+    await rdbInsert(created);
+
+    return res.status(201).send();
+  } catch (e) {
+    if (e.errorType === "uniqueViolated") {
+      return res.status(409).json({ error: "Conflict" });
+    }
+    return res.status(500).json({ error: e.message });
   }
-
-  const ph = Number(obj.productivity_hour);
-  if (!Number.isFinite(ph)) {
-    return res.status(400).json({ error: "Bad Request" });
-  }
-
-  const exists = db_RDB.some(
-    x => x.country === obj.country && x.year === obj.year
-  );
-
-  if (exists) {
-    return res.status(409).json({ error: "Conflict" });
-  }
-
-  const created = {
-    id: nextId_RDB++,
-    country: obj.country,
-    year: obj.year,
-    productivity_hour: ph
-  };
-
-  db_RDB.push(created);
-
-  // Como en tu ejemplo, 201 sin datos
-  return res.status(201).send();
 });
 
 //=======================================//
 //================= PUT =================//
 //=======================================//
 
-// Ejemplo:
-// PUT /api/v1/workers-productivity/Spain/1995
-app.put(`${BASE_RDB}/:country/:year`, (req, res) => {
-  const country = req.params.country;
-  const year = Number(req.params.year);
-  const obj = req.body;
+app.put(`${BASE_RDB}/:country/:year`, async (req, res) => {
+  try {
+    const country = req.params.country;
+    const year = Number(req.params.year);
+    const obj = req.body;
 
-  if (!Number.isInteger(year)) {
-    return res.status(400).json({ error: "Bad Request" });
+    if (!Number.isInteger(year)) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    if (
+      !obj ||
+      typeof obj.country !== "string" ||
+      obj.country.trim().length === 0 ||
+      !Number.isInteger(obj.year) ||
+      obj.productivity_hour === undefined
+    ) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    const ph = Number(obj.productivity_hour);
+    if (!Number.isFinite(ph)) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    if (obj.country !== country || obj.year !== year) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    const current = await rdbFindOne({ country, year }, { _id: 0, key: 0 });
+
+    if (!current) {
+      return res.status(404).json({ error: "Not Found" });
+    }
+
+    const numReplaced = await rdbUpdate(
+      { country, year },
+      {
+        $set: {
+          id: current.id,
+          country: obj.country,
+          year: obj.year,
+          productivity_hour: ph,
+          key: `${obj.country}-${obj.year}`
+        }
+      },
+      {}
+    );
+
+    if (numReplaced === 0) {
+      return res.status(404).json({ error: "Not Found" });
+    }
+
+    return res.status(200).send();
+  } catch (e) {
+    if (e.errorType === "uniqueViolated") {
+      return res.status(409).json({ error: "Conflict" });
+    }
+    return res.status(500).json({ error: e.message });
   }
-
-  const idx = db_RDB.findIndex(
-    x => x.country === country && x.year === year
-  );
-
-  if (idx === -1) {
-    return res.status(404).json({ error: "Not Found" });
-  }
-
-  if (
-    !obj ||
-    typeof obj.country !== "string" ||
-    obj.country.trim().length === 0 ||
-    !Number.isInteger(obj.year) ||
-    obj.productivity_hour === undefined
-  ) {
-    return res.status(400).json({ error: "Bad Request" });
-  }
-
-  const ph = Number(obj.productivity_hour);
-  if (!Number.isFinite(ph)) {
-    return res.status(400).json({ error: "Bad Request" });
-  }
-
-  // Comprobación de coherencia entre URL y body
-  if (obj.country !== country || obj.year !== year) {
-    return res.status(400).json({ error: "Bad Request" });
-  }
-
-  db_RDB[idx] = {
-    id: db_RDB[idx].id,
-    country: obj.country,
-    year: obj.year,
-    productivity_hour: ph
-  };
-
-  // Como en tu ejemplo, 200 sin datos
-  return res.status(200).send();
 });
 
 //=======================================//
 //=============== DELETE ================//
 //=======================================//
 
-// DELETE recurso concreto
-app.delete(`${BASE_RDB}/:country/:year`, (req, res) => {
-  const country = req.params.country;
-  const year = Number(req.params.year);
+app.delete(`${BASE_RDB}/:country/:year`, async (req, res) => {
+  try {
+    const country = req.params.country;
+    const year = Number(req.params.year);
 
-  if (!Number.isInteger(year)) {
-    return res.status(400).json({ error: "Bad Request" });
+    if (!Number.isInteger(year)) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    const numRemoved = await rdbRemove({ country, year }, { multi: false });
+
+    if (numRemoved === 0) {
+      return res.status(404).json({ error: "Not Found" });
+    }
+
+    return res.status(200).send();
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
   }
-
-  const idx = db_RDB.findIndex(
-    x => x.country === country && x.year === year
-  );
-
-  if (idx === -1) {
-    return res.status(404).json({ error: "Not Found" });
-  }
-
-  db_RDB.splice(idx, 1);
-  return res.status(200).send();
 });
 
-// DELETE colección completa
-app.delete(BASE_RDB, (req, res) => {
-  db_RDB = [];
-  nextId_RDB = 1;
-  return res.status(200).send();
+app.delete(BASE_RDB, async (req, res) => {
+  try {
+    await rdbRemove({}, { multi: true });
+    return res.status(200).send();
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
 });
 
 //=======================================//
