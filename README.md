@@ -9,10 +9,12 @@
 
 - **Repository**: [gti-sos/SOS2526-19](https://github.com/gti-sos/SOS2526-19)
 
-- **URI**: https://sos2526-19.onrender.com
+- **URL**: https://sos2526-19.onrender.com
 
 - **APIs**
   - [/cool](https://sos2526-19.onrender.com/cool)
   - [Pablo](https://sos2526-19.onrender.com/api/v1/drought-stats)
-  - [Raúl](https://sos2526-19.onrender.com/api/v1/workers-productivity)
+  - https://sos2526-19.onrender.com/api/v1/workers-productivity Raúl de los Reyes
   - [Javier](https://sos2526-19.onrender.com/api/v1/earthquakes)
+ 
+  - https://sos2526-19.onrender.com/api/v1/workers-productivity/docs (developed by Raúl de los Reyes benítez)
