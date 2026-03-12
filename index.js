@@ -240,30 +240,62 @@ app.get("/samples/RDB", (req, res) => {
 app.get(BASE_RDB, async (req, res) => {
   try {
     const query = {};
+    const allowedQueries = ["id", "country", "year", "productivity_hour", "from", "to"];
+    const queryKeys = Object.keys(req.query);
+
+    const invalidQuery = queryKeys.find(q => !allowedQueries.includes(q));
+    if (invalidQuery) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
+    if (req.query.id) {
+      const id = Number(req.query.id);
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({ error: "Bad Request" });
+      }
+      query.id = id;
+    }
 
     if (req.query.country) {
       query.country = req.query.country;
     }
 
+    if (req.query.productivity_hour) {
+      const productivityHour = Number(req.query.productivity_hour);
+      if (!Number.isFinite(productivityHour)) {
+        return res.status(400).json({ error: "Bad Request" });
+      }
+      query.productivity_hour = productivityHour;
+    }
+
+    if (req.query.year && (req.query.from || req.query.to)) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
     if (req.query.year) {
       const year = Number(req.query.year);
-
       if (!Number.isInteger(year)) {
         return res.status(400).json({ error: "Bad Request" });
       }
-
       query.year = year;
-    }
+    } else if (req.query.from || req.query.to) {
+      query.year = {};
 
-    if (req.query.from || req.query.to) {
-      const from = Number(req.query.from);
-      const to = Number(req.query.to);
-
-      if (!Number.isInteger(from) || !Number.isInteger(to)) {
-        return res.status(400).json({ error: "Bad Request" });
+      if (req.query.from) {
+        const from = Number(req.query.from);
+        if (!Number.isInteger(from)) {
+          return res.status(400).json({ error: "Bad Request" });
+        }
+        query.year.$gte = from;
       }
 
-      query.year = { $gte: from, $lte: to };
+      if (req.query.to) {
+        const to = Number(req.query.to);
+        if (!Number.isInteger(to)) {
+          return res.status(400).json({ error: "Bad Request" });
+        }
+        query.year.$lte = to;
+      }
     }
 
     const result = await rdbFind(query);
