@@ -8,7 +8,7 @@ const db_RDB = new Datastore({
   filename: "workers-productivity.db",
   autoload: true
 });
-function loadBackendRDB(app){
+export function loadBackendRDB(app){
 db_RDB.ensureIndex({ fieldName: "key", unique: true }, (err) => {
   if (err) {
     console.error("Error creating NeDB index for RDB:", err);
