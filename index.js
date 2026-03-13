@@ -27,6 +27,10 @@ import {loadBackendRDB} from './src/back/index-RDB.js';
 
 //============ INICIAR LA APP WEB ============//
 export const app = express(); // definimos la app con express
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.json()); // parsea toda peticion de la app a formato JSON
 app.use(express.static(path.join(__dirname, "public")));
 

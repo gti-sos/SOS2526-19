@@ -1,6 +1,12 @@
 //=======================================//
 //============ FUNCIONES RDB ============//
 //=======================================//
+
+import Datastore from '@seald-io/nedb';
+
+const SHEET_NAME_RDB = "Raúl";
+
+
 export function loadBackendRDB(app){
 const BASE_RDB = "/api/v1/workers-productivity";
 
@@ -257,24 +263,6 @@ app.get(`${BASE_RDB}/loadInitialData`, async (req, res) => {
 
 // app.use(BASE_RDB, requireApiKey);
 
-app.get("/samples/RDB", (req, res) => {
-  try {
-    const country = req.query.country || "Spain";
-    const NUMERIC_FIELD_RDB = "productivity_hour";
-
-    const rows = cargarDatos(EXCEL_FILE, SHEET_NAME_RDB);
-    const mean = meanByCountry_RDB(rows, country, NUMERIC_FIELD_RDB);
-
-    res.status(200).json({
-      sample: "RDB",
-      country,
-      field: NUMERIC_FIELD_RDB,
-      mean
-    });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 //=======================================//
 //================= GET =================//
