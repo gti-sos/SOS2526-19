@@ -319,7 +319,12 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"country\": \"{{testCountry}}\",\r\n  \"year\": {{testYear}},\r\n  \"productivity_hour\": 700.123,\r\n  \"avg_annual_hours\": 1800.456,\r\n  \"gpd_per_capita\": 25000.789,\r\n  \"human_capital\": 2.345,\r\n  \"capital_stock_worker\": 300000.123,\r\n  \"employment\": 12.456,\r\n  \"household_consum\": 700000.123,\r\n  \"investment_share\": 0.234\r\n}"
+          "raw": "{\r\n  \"country\": \"{{testCountry}}\",\r\n  \"year\": {{testYear}},\r\n  \"productivity_hour\": 700.123,\r\n  \"avg_annual_hours\": 1800.456,\r\n  \"gpd_per_capita\": 25000.789,\r\n  \"human_capital\": 2.345,\r\n  \"capital_stock_worker\": 300000.123,\r\n  \"employment\": 12.456,\r\n  \"household_consum\": 700000.123,\r\n  \"investment_share\": 0.234\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": {
           "raw": "{{baseURL}}{{basePath}}",
@@ -560,6 +565,11 @@
               "language": "json"
             }
           }
+        }, "url": {
+          "raw": "{{baseURL}}{{basePath}}",
+          "host": [
+            "{{baseURL}}{{basePath}}"
+          ]
         }
       },
       "response": []
@@ -628,7 +638,12 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"country\": \"Polonia\",\r\n  \"year\": 2000,\r\n  \"productivity_hour\": 710.123,\r\n  \"avg_annual_hours\": 1810.456,\r\n  \"gpd_per_capita\": 25500.789,\r\n  \"human_capital\": 2.445,\r\n  \"capital_stock_worker\": 305000.123,\r\n  \"employment\": 12.956,\r\n  \"household_consum\": 710000.123,\r\n  \"investment_share\": 0.244\r\n}"
+          "raw": "{\r\n  \"country\": \"Polonia\",\r\n  \"year\": 2000,\r\n  \"productivity_hour\": 710.123,\r\n  \"avg_annual_hours\": 1810.456,\r\n  \"gpd_per_capita\": 25500.789,\r\n  \"human_capital\": 2.445,\r\n  \"capital_stock_worker\": 305000.123,\r\n  \"employment\": 12.956,\r\n  \"household_consum\": 710000.123,\r\n  \"investment_share\": 0.244\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": {
           "raw": "{{baseURL}}{{basePath}}/Polonia/2000",
