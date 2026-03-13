@@ -1,18 +1,24 @@
 "use strict";
 
 //============ IMPORTS ============//
-const express = require("express"); // framework para microservicios que permite filtrar el protocolo http y establecer el comportamiento del microsevicio con él
-const xlsx = require("xlsx");
+//const express = require("express"); // framework para microservicios que permite filtrar el protocolo http y establecer el comportamiento del microsevicio con él
+import express from 'express';
+//const xlsx = require("xlsx");
+import xlsx from 'xlsx';
 
-const cool = require("cool-ascii-faces");
+//const cool = require("cool-ascii-faces");
+import cool from 'cool-ascii-faces';
 
-const fs = require("fs");
-const { marked } = require("marked");
+//const fs = require("fs");
+import fs from 'fs';
 
-import PRA from 'index-PRA.js'
+//const { marked } = require("marked");
+import {marked} from 'marked';
+
+import {loadBackendPRA} from './src/back/index-PRA.js';
 
 //============ INICIAR LA APP WEB ============//
-const app = express(); // definimos la app con express
+export const app = express(); // definimos la app con express
 app.use(express.json()); // parsea toda peticion de la app a formato JSON
 
 const PORT = process.env.PORT || 3000; // Render te da el puerto en process.env.PORT
@@ -528,3 +534,5 @@ app.delete(`${BASE_JMJ}/:id`, (req, res) => {
   db_JMJ.splice(idx, 1);
   res.status(200).json({ message: "Elemento eliminado.", deleted });
 });
+
+loadBackendPRA(app)
