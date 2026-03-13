@@ -14,7 +14,9 @@
 - **APIs**
   - [/cool](https://sos2526-19.onrender.com/cool)
   - [Pablo](https://sos2526-19.onrender.com/api/v1/drought-stats)
-  - https://sos2526-19.onrender.com/api/v1/workers-productivity Raúl de los Reyes
+  - [Raúl](https://sos2526-19.onrender.com/api/v1/workers-productivity)
   - [Javier](https://sos2526-19.onrender.com/api/v1/earthquakes)
- 
-  - https://sos2526-19.onrender.com/api/v1/workers-productivity/docs (developed by Raúl de los Reyes benítez)
+  
+  - 
+  - https://sos2526-19.onrender.com/api/v1/workers-productivity/docs (developed by Raúl de los Reyes Benítez)
+  - https://sos2526-19.onrender.com/api/v1/earthquakes (developed by Javier Morales Jiménez)
