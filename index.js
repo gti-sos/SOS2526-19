@@ -8,6 +8,8 @@ import cool from 'cool-ascii-faces'; //const cool = require("cool-ascii-faces");
 import fs from 'fs'; //const fs = require("fs");
 import { marked } from 'marked'; //const { marked } = require("marked");
 
+import xlsx from 'xlsx';
+
 import { loadBackendPRA } from './src/back/index-PRA.js';
 import { loadBackendRDB } from './src/back/index-RDB.js';
 import { loadBackendJMJ } from './src/back/index-JMJ.js';
@@ -47,6 +49,17 @@ app.get("/about", (req, res) => {
         </html>
     `);
 });
+
+//============ FUNCIONES ADICIONALES ============//
+export const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
+
+export function cargarDatos(archivo, hoja) {
+    let libro = xlsx.readFile(archivo);
+    let sheet = libro.Sheets[hoja];
+
+    if (!sheet) throw new Error("No existe la hoja: " + hoja);
+    return xlsx.utils.sheet_to_json(sheet, { defval: null });
+}
 
 loadBackendPRA(app);
 loadBackendRDB(app);
