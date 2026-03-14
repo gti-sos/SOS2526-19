@@ -1,161 +1,176 @@
 //=======================================//
 //============ FUNCIONES JMJ ============//
 //=======================================//
+import xlsx from 'xlsx';
+import dataStore from 'nedb'; //const Datastore = require("@seald-io/nedb")
 
-import {cargarDatos, EXCEL_FILE} from '../../index.js'
-import Datastore from '@seald-io/nedb'; //const Datastore = require("@seald-io/nedb")
-
+const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 const SHEET_NAME_JMJ = "Javier"; 
 const BASE_JMJ = `/api/v1/earthquakes`;
-let db_JMJ = [];
 
-function mediaSeveridadPorPais(filas, pais) {
-    let subset = filas.filter(f => f.country === pais);
+const db = new dataStore();
 
-    if (subset.length === 0) {
-        console.log("No hay datos para ese país");
-        return;
+export function loadBackendJMJ(app) {
+	// ---------------- CARGAR BASE DE DATOS ---------------- //
+	db.count({}, (err, count) => {
+		if (err) return res.status(500).json({ error: "Error al contar documentos." });
+		if (count > 0) return res.status(200).json({ message: "La base de datos ya tiene datos." });
+
+		let initial = cargarDatos(EXCEL_FILE, SHEET_NAME_JMJ);
+		let db_JMJ = initial.map((x) => ({ ...x }));
+		db.insert(db_JMJ);
+	});
+
+	// ---------------- COLECCIONES ----------------//
+	// -------- GET colección (200 OK) ----------
+	app.get(BASE_JMJ, (req, res) => {
+		db.find({}, (err, docs) => {
+			if (err) return res.status(500).json({ error: "Error al obtener datos." });
+			res.status(200).json(docs.map(({ _id, ...rest }) => rest));
+		});
+	});
+
+	// -------- POST crear (201 / 400 / 409) ----------
+	app.post(BASE_JMJ, (req, res) => {
+        const obj = req.body;
+
+        if (!obj || typeof obj.country !== "string" || obj.country.trim().length === 0 || !obj.fromdate || obj.severity === undefined || !Number.isFinite(Number(obj.severity))) {
+            return res.status(400).json({ error: "Bad Request: faltan campos obligatorios o son inválidos." });
+        }
+
+        db.findOne({ country: obj.country, fromdate: obj.fromdate }, (err, earthquakeExisting) => {
+            if (err) return res.status(500).json({ error: "Error buscando datos conflicto." });
+            if (earthquakeExisting) return res.status(409).json({ error: `Ya existe un terremoto en ${obj.country} con fecha ${obj.fromdate}.` });
+			
+			const nuevoTerremoto = {
+				country: obj.country,
+				fromdate: obj.fromdate,
+				todate: obj.todate || obj.fromdate,
+				severity: Number(obj.severity),
+				alertlevel: obj.alertlevel || null,
+				depth: obj.depth !== undefined ? Number(obj.depth) : null,
+				exposed_population: obj.exposed_population !== undefined ? Number(obj.exposed_population) : null
+			};
+
+			db.insert(nuevoTerremoto, (err, earthquake) => {
+				if (err) return res.status(500).json({ error: "Error al insertar el nuevo dato." });
+				let { _id, ...rest } = earthquake;
+				res.status(201).json(rest);
+			});
+        });
+	});
+
+	// -------- DELETE colección (200 OK) ----------
+	app.delete(BASE_JMJ, (req, res) => {
+		db.remove({}, { multi: true }, (err) => { // con multi damos el permiso de borrar varios terremotos de una vez
+            if (err) return res.status(500).json({ error: "Error al borrar datos." });
+            res.status(200).json({ message: "Todos los datos borrados." });
+        });
+	});
+
+	// -------- PUT colección (no está permitido) ----------
+	app.put(BASE_JMJ, (req, res) => {
+		res.status(405).json({ error: `No se puede editar completamente la DB de JMJ.` })
+	});
+
+	//---------------- ID ESPECIFICO ----------------//
+	// -------- GET por id (200 / 404) ----------
+	app.get(`${BASE_JMJ}/:country/:date`, (req, res) => { // ":_____" se usa para indicar que hay un parametro en la url que indica el elemento en especifico
+		const { country, date } = req.params;
+		const query = {};
+
+		if (country) query.country = country;
+		if (date) query.fromdate = date;
+
+		db.findOne(query, (err, items) => {
+			if (err) return res.status(500).json({ error: "Error en la base de datos." });
+			if (!items || items.length === 0) return res.status(404).json({ error: "No se encontraron resultados." });
+
+			const limpio = items.map(({ _id, ...rest }) => rest);
+			res.status(200).json(limpio);
+		});
+	});
+
+	// -------- PUT por id (200 / 400 / 404 / 409) ----------
+	app.put(`${BASE_JMJ}/:country/:date`, (req, res) => {
+		const { country, date } = req.params;
+		const obj = req.body;
+
+		if (!obj || typeof obj.country !== "string" || obj.country.trim().length === 0 || !obj.fromdate || obj.severity === undefined || !Number.isFinite(Number(obj.severity))) {
+			return res.status(400).json({ error: "Bad Request: faltan campos obligatorios o son inválidos." });
+		}
+
+		db.findOne({ country, fromdate: date }, (err, item) => {
+			if (err) return res.status(500).json({ error: "Error buscando datos." });
+			if (!item) return res.status(404).json({ error: `No existe un terremoto en ${country} con fecha ${date}.` });
+
+			db.findOne({ country: obj.country, fromdate: obj.fromdate }, (err, conflict) => {
+				if (err) return res.status(500).json({ error: "Error buscando conflicto." });
+				if (conflict) return res.status(409).json({ error: `Ya existe un terremoto en ${obj.country} con fecha ${obj.fromdate}.` });
+
+				const updated = {
+					country: obj.country,
+					fromdate: obj.fromdate,
+					todate: obj.todate || obj.fromdate,
+					severity: Number(obj.severity),
+					alertlevel: obj.alertlevel || null,
+					depth: obj.depth !== undefined ? Number(obj.depth) : null,
+					exposed_population: obj.exposed_population !== undefined ? Number(obj.exposed_population) : null
+				};
+
+				db.update({ _id: item._id }, { $set: updated }, {}, (err) => {
+					if (err) return res.status(500).json({ error: "Error al actualizar." });
+					res.status(200).json(updated);
+				});
+			});
+		});
+	});
+
+	// -------- DELETE por id (200 / 404) ----------
+	app.delete(`${BASE_JMJ}/:country/:date`, (req, res) => {
+		const { country, date } = req.params;
+
+		db.findOne({ country, fromdate: date }, (err, item) => {
+			if (err) return res.status(500).json({ error: "Error buscando datos." });
+			if (!item) return res.status(404).json({ error: `No se ha encontrado un terremoto en ${country} con fecha ${date}.` });
+
+			db.remove({ _id: item._id }, {}, (err) => {
+				if (err) return res.status(500).json({ error: "Error al borrar." });
+				let { _id, ...rest } = item;
+				res.status(200).json({ message: "Elemento eliminado.", deleted: rest });
+			});
+		});
+	});
+
+	// -------- POST a country y date (no está permitido) ----------
+	app.post(`${BASE_JMJ}/:country/:date`, (req, res) => {
+		res.status(405).json({ error: `No se puede hacer post sobre un elemento ya creado.` })
+	});
+}
+
+function cargarDatos(archivo, hoja) {
+    let libro = xlsx.readFile(archivo);
+    let sheet = libro.Sheets[hoja];
+
+    if (!sheet) throw new Error("No existe la hoja: " + hoja);
+    
+    const datos = xlsx.utils.sheet_to_json(sheet, { defval: null, raw: true });
+
+    return datos.map(row => ({
+        ...row,
+        fromdate: parsearFecha(row.fromdate),
+        todate: parsearFecha(row.todate),
+    }));
+}
+
+function parsearFecha(valor) {
+    if (!valor) return null;
+
+    if (typeof valor === "number") {
+        const date = xlsx.SSF.parse_date_code(valor);
+        return `${date.y}-${String(date.m).padStart(2, "0")}-${String(date.d).padStart(2, "0")}`;
     }
 
-    let valores = subset
-        .map(f => Number(f["severity"])) // transformar los caracteres en número
-        .filter(v => Number.isFinite(v)); // devuelve aquellos valores que son numericos (finitos), ya que ha podido parsear alguna letra
-
-    let suma = valores.reduce((acc, v) => acc + v, 0);
-
-    return suma / valores.length;
+    if (typeof valor === "string") return valor.split(" ")[0];
+    return null;
 }
-
-
-
-export function loadBackendJMJ(app){
-
-    app.get("/samples/JMJ", (req, res) => {
-        try {
-            let PAIS = req.query.pais || "Iran";
-            let datos = cargarDatos(EXCEL_FILE, SHEET_NAME_JMJ);
-            let resultado = mediaSeveridadPorPais(datos, PAIS);
-
-            res.status(200).json({
-                pais: PAIS,
-                media_severidad: resultado
-            });
-        } catch (e) {
-            res.status(500).json({ error: e.message });
-        }
-    });
-
-    app.get(`${BASE_JMJ}/loadInitialData`, (req, res) => {
-        if (db_JMJ.length > 0) {
-            return res.status(200).json({
-                message: "La db ya contiene datos.",
-                count: db_JMJ.length,
-                data: db_JMJ
-            });
-        }
-
-        let initial = cargarDatos(EXCEL_FILE, SHEET_NAME_JMJ);
-
-        db_JMJ = initial.map((x, i) => ({ id: i + 1, ...x }));
-
-        return res.status(201).json({
-            message: `DB inicializada con ${db_JMJ.length} datos.`,
-            count: db_JMJ.length
-        });
-    });
-
-    // app.use(BASE_JMJ, requireApiKey);
-
-    // ---------------- COLECCIONES ----------------//
-    // -------- GET colección (200 OK) ----------
-    app.get(BASE_JMJ, (req, res) => {
-        res.status(200).json(db_JMJ);
-    });
-
-    // -------- POST crear (201 / 400 / 409) ----------
-    app.post(BASE_JMJ, (req, res) => {
-        const obj = req.body;
-
-        if (!obj || typeof obj.country !== "string" || obj.country.trim().length === 0 || !obj.fromdate || obj.severity === undefined || !Number.isFinite(Number(obj.severity))) {
-            return res.status(400).json({ error: "Bad Request" });
-        }
-
-        const c = db_JMJ.find(x => x.pais === obj.pais && x.fechaInicio === obj.fechaInicio);
-        if (c.length > 0) return res.status(409).json({ error: `Ya existe un terremoto en ${c.pais} con fecha ${c.fechaInicio}` });
-
-        const nuevo_id = db_JMJ.length > 0 ? Math.max(...db_JMJ.map(x => x.id)) + 1 : 1;
-        const nuevoTerremoto = {
-            id: nuevo_id,
-            country: obj.country,
-            fromdate: obj.fromdate,
-            todate: obj.todate || obj.fromdate,
-            severity: Number(obj.severity),
-            alertlevel: obj.alertlevel || null,
-            depth: obj.depth || null,
-            exposed_population: obj.exposed_population || null
-        };
-
-        db_JMJ.push(nuevoTerremoto);
-        res.status(201).json(nuevoTerremoto);
-    });
-
-    // -------- DELETE colección (200 OK) ----------
-    app.delete(BASE_JMJ, (req, res) => {
-        db_JMJ = [];
-        res.status(200).json({ message: "Todos los datos borrados." });
-    });
-
-    app.put(BASE_JMJ, (req, res) => {
-        res.status(405).json({ error: `No se puede editar completamente la DB de JMJ.` })
-    });
-
-    //---------------- ID ESPECIFICO ----------------//
-    // -------- GET por id (200 / 404) ----------
-    app.get(`${BASE_JMJ}/:id`, (req, res) => { // ":id" se usa para indicar que hay un parametro en la url que indica el elemento en especifico
-        const id = Number(req.params.id);
-        const item = db_JMJ.find(x => x.id === id);
-        if (!item) return res.status(404).json({ error: `No se ha encontrado el objeto ${id}.` });
-        res.status(200).json(item);
-    });
-
-    // -------- PUT por id (200 / 400 / 404 / 409) ----------
-    app.put(`${BASE_JMJ}/:id`, (req, res) => {
-        const id = Number(req.params.id);
-        const obj = req.body;
-
-        const idx = db_JMJ.findIndex(x => x.id === id);
-        if (idx === -1) return res.status(404).json({ error: `No existe el objeto ${id}.` });
-
-        if (!obj || typeof obj.country !== "string" || obj.country.trim().length === 0 || !obj.fromdate || obj.severity === undefined || !Number.isFinite(Number(obj.severity))) {
-            return res.status(400).json({ error: "Bad Request" });
-        }
-
-        const conflict = db_JMJ.some(x => x.id !== id && x.country === obj.country && x.fromdate === obj.fromdate);
-        if (conflict) return res.status(409).json({ error: "Conflict" });
-
-        db_JMJ[idx] = {
-            id,
-            country: obj.country,
-            fromdate: obj.fromdate,
-            todate: obj.todate || obj.fromdate,
-            severity: Number(obj.severity),
-            alertlevel: obj.alertlevel || null,
-            depth: obj.depth || null,
-            exposed_population: obj.exposed_population || null
-        };
-
-        res.status(200).json(db_JMJ[idx]);
-    });
-
-    // -------- DELETE por id (200 / 404) ----------
-    app.delete(`${BASE_JMJ}/:id`, (req, res) => {
-        const id = Number(req.params.id);
-        const idx = db_JMJ.findIndex(x => x.id === id);
-        if (idx === -1) return res.status(404).json({ error: `No se ha encontrado el objeto ${id}` });
-
-        const deleted = db_JMJ[idx];
-        db_JMJ.splice(idx, 1);
-        res.status(200).json({ message: "Elemento eliminado.", deleted });
-    });
-}
-
