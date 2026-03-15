@@ -443,6 +443,11 @@ app.get(`${BASE_RDB}/loadInitialData`, async (req, res) => {
   }
 });
 
+
+app.get(`${BASE_RDB}/docs`, (req, res) => {
+  res.redirect("https://documenter.getpostman.com/view/52424600/2sBXigKYBq");
+});
+
 // app.use(BASE_RDB, requireApiKey);
 
 
