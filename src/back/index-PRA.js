@@ -1,4 +1,5 @@
 import dataStore from '@seald-io/nedb';
+import xlsx from "xlsx";
 
 const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 //import EXCEL_SHEET_FILE
