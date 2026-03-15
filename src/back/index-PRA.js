@@ -61,6 +61,18 @@ function cargarDatos(archivo, hoja) {
     }));
 }
 
+function parsearFecha(valor) {
+    if (!valor) return null;
+
+    if (typeof valor === "number") {
+        const date = xlsx.SSF.parse_date_code(valor);
+        return `${date.y}-${String(date.m).padStart(2, "0")}-${String(date.d).padStart(2, "0")}`;
+    }
+
+    if (typeof valor === "string") return valor.split(" ")[0];
+    return null;
+}
+
 export function loadBackendPRA(app) {
   const db_PRA = new dataStore({ filename: "droughts-stats.db", autoload: true });
 
