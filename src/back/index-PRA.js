@@ -1,5 +1,6 @@
-import {cargarDatos, EXCEL_FILE} from '../../index.js'
 import dataStore from '@seald-io/nedb';
+
+const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 //import EXCEL_SHEET_FILE
 
 //=======================================//
@@ -43,6 +44,21 @@ app.get("/samples/PRA", (req, res) => {
   }
 });
 */
+
+function cargarDatos(archivo, hoja) {
+    let libro = xlsx.readFile(archivo);
+    let sheet = libro.Sheets[hoja];
+
+    if (!sheet) throw new Error("No existe la hoja: " + hoja);
+    
+    const datos = xlsx.utils.sheet_to_json(sheet, { defval: null, raw: true });
+
+    return datos.map(row => ({
+        ...row,
+        fromdate: parsearFecha(row.fromdate),
+        todate: parsearFecha(row.todate),
+    }));
+}
 
 export function loadBackendPRA(app) {
   const db_PRA = new dataStore({ filename: "droughts-stats.db", autoload: true });
