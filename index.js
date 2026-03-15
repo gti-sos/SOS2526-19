@@ -2,12 +2,16 @@
 
 //============ IMPORTS ============//
 import express from 'express'; //const express = require("express"); // framework para microservicios que permite filtrar el protocolo http y establecer el comportamiento del microsevicio con él
+import fs from "fs";
+import { marked } from "marked";
 
 import { loadBackendPRA } from './src/back/index-PRA.js';
 import { loadBackendRDB } from './src/back/index-RDB.js';
 import { loadBackendJMJ } from './src/back/index-JMJ.js';
 
 //============ INICIAR LA APP WEB ============//
+export const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
+
 export const app = express(); // definimos la app con express
 app.use(express.json()); // parsea toda peticion de la app a formato JSON
 app.use(express.static("./public"));
@@ -18,3 +22,28 @@ app.listen(PORT, console.log(`Server running on port ${PORT}`));
 loadBackendPRA(app);
 loadBackendRDB(app);
 loadBackendJMJ(app);
+
+app.get("/about", (req, res) => {
+    const readme = fs.readFileSync("./README.md", "utf-8");
+    const html = marked(readme);
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="utf-8">
+            <title>About SOS2526-19</title>
+        </head>
+        <body>
+            ${html}
+        </body>
+        </html>
+    `);
+});
+
+export function cargarDatos(archivo, hoja) {
+    let libro = xlsx.readFile(archivo);
+    let sheet = libro.Sheets[hoja];
+
+    if (!sheet) throw new Error("No existe la hoja: " + hoja);
+    return xlsx.utils.sheet_to_json(sheet, { defval: null });
+}
