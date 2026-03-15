@@ -1,4 +1,7 @@
-import {cargarDatos, EXCEL_FILE} from '../../index.js'
+import dataStore from '@seald-io/nedb';
+import xlsx from "xlsx";
+
+const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 //import EXCEL_SHEET_FILE
 
 //=======================================//
@@ -6,7 +9,7 @@ import {cargarDatos, EXCEL_FILE} from '../../index.js'
 //=======================================//
 
 const BASE_PRA = `/api/v1/drought-stats`;
-let db_PRA = [];
+
 const SHEET_NAME_PRA = "Pablo";
 /*
 function calculaMediaDuracion(datos, pais) { //recibe los datos de la hoja de excel en JSON
@@ -43,140 +46,445 @@ app.get("/samples/PRA", (req, res) => {
 });
 */
 
-export function loadBackendPRA(app) {
-  app.get(`${BASE_PRA}/loadInitialData`, (req, res) => {
-    if (db_PRA.length > 0) {
-      return res.status(200).json({
-        message: "La db ya contiene datos.",
-        count: db_PRA.length
-      });
+function cargarDatos(archivo, hoja) {
+    let libro = xlsx.readFile(archivo);
+    let sheet = libro.Sheets[hoja];
+
+    if (!sheet) throw new Error("No existe la hoja: " + hoja);
+    
+    const datos = xlsx.utils.sheet_to_json(sheet, { defval: null, raw: true });
+
+    return datos.map(row => ({
+        ...row,
+        fromdate: parsearFecha(row.fromdate),
+        todate: parsearFecha(row.todate),
+    }));
+}
+
+function parsearFecha(valor) {
+    if (!valor) return null;
+
+    if (typeof valor === "number") {
+        const date = xlsx.SSF.parse_date_code(valor);
+        return `${date.y}-${String(date.m).padStart(2, "0")}-${String(date.d).padStart(2, "0")}`;
     }
 
-    let initial = cargarDatos(EXCEL_FILE, SHEET_NAME_PRA);
+    if (typeof valor === "string") return valor.split(" ")[0];
+    return null;
+}
 
-    db_PRA = initial.map((x, i) => ({ id: i + 1, ...x }));
+export function loadBackendPRA(app) {
+  const db_PRA = new dataStore({ filename: "droughts-stats.db", autoload: true });
 
-    //app.use(BASE_PRA, requireApiKey);
+// ========= Load initial data =========
+  app.get(`${BASE_PRA}/loadInitialData`, async (req, res) => {
 
-    return res.status(201).json({
-      message: `DB inicializada con ${db_PRA.length} datos.`,
-      count: db_PRA.length
+    db_PRA.count({}, async (err, count) => {
+
+      if (err) {
+        return res.status(500).send("Database error");
+      }
+
+      if (count === 0) {
+
+        try {
+
+          const initial = await cargarDatos(EXCEL_FILE, SHEET_NAME_PRA);
+
+          db_PRA.insert(initial, (err, docs) => {
+
+            if (err) {
+              return res.status(500).send("Error inserting data");
+            }
+
+            return res.status(201).send({
+              message: "Initial data loaded",
+              total: docs.length
+            });
+
+          });
+
+        } catch (error) {
+          return res.status(500).send("Error loading data from sheet");
+        }
+
+      } else {
+
+        return res.status(409).send({
+          message: "Database already initialized"
+        });
+
+      }
+
     });
+
+  });
+
+  app.get(`${BASE_PRA}/docs`, (req, res) => {
+    res.redirect("https://documenter.getpostman.com/view/52410080/2sBXigMZ17");
   });
 
   //app.use(BASE_PRA, requireApiKey);
 
   // -------- GET colección (200 OK) ----------
-  app.get(BASE_PRA, (req, res) => {
-    res.status(200).json(db_PRA);
+  app.get(`${BASE_PRA}`, (req, res) => {
+
+    const query = {};
+    // Filtro opcional por description
+    if (req.query.description) {
+      query.description = req.query.description;
+    }
+
+    // Filtro opcional por alert_level
+    if (req.query.alert_level) {
+      query.alert_level = req.query.alert_level;
+    }
+
+    // Filtro opcional por alert_score exacto
+    if (req.query.alert_score) {
+      query.alert_score = parseInt(req.query.alert_score);
+    }
+
+    // Filtro opcional por episode_alert_score exacto
+    if (req.query.episode_alert_score) {
+      query.episode_alert_score = parseFloat(req.query.episode_alert_score);
+    }
+
+    // Filtro opcional por country
+    if (req.query.country) {
+      query.country = req.query.country;
+    }
+
+    //Filtro de rango entre from_date y to_date
+    if (req.query.from_date || req.query.to_date) {
+      query.from_date = {};
+      query.to_date = {};
+
+      if (req.query.from_date) {
+        const from = parseInt(req.query.from_date);
+        if (!isNaN(from)) {
+          query.from_date.$gte = from; // from_date >= valor
+        } else {
+          return res.status(400).send({ error: "from_date must be a number" });
+        }
+      }
+
+      if (req.query.to_date) {
+        const to = parseInt(req.query.to_date);
+        if (!isNaN(to)) {
+          query.to_date.$lte = to; // to_date <= valor
+        } else {
+          return res.status(400).send({ error: "to_date must be a number" });
+        }
+      }
+
+      // Si no hay límites válidos, quitamos el filtro
+      if (Object.keys(query.from_date).length === 0) delete query.from_date;
+      if (Object.keys(query.to_date).length === 0) delete query.to_date;
+    }
+/*
+    // Filtro opcional por severity_km2 mínimo
+    if (req.query.min_severity) {
+      const minSeverity = parseInt(req.query.min_severity);
+      query.severity_km2 = { $gte: minSeverity };
+    }
+
+    // Filtro opcional por severity_km2 máximo
+    if (req.query.max_severity) {
+      const maxSeverity = parseInt(req.query.max_severity);
+      query.severity_km2 = query.severity_km2 || {};
+      query.severity_km2.$lte = maxSeverity;
+    }
+*/
+
+    // Filtro opcional por severity_km2 exacto
+    if (req.query.severity_km2) {
+      query.severity_km2 = parseInt(req.query.severity_km2);
+    }
+
+    // Filtro opcional por iso
+    if (req.query.iso) {
+      query.iso = req.query.iso;
+    }
+
+    // Filtro opcional por gdacs_id
+    if (req.query.gdacs_id) {
+      query.gdacs_id = req.query.gdacs_id;
+    }
+
+    // Filtro opcional por duration_day exacto
+    if (req.query.duration_day) {
+      query.duration_day = parseInt(req.query.duration_day);
+    }
+
+    // Filtro opcional por impact
+    if (req.query.impact) {
+      query.impact = req.query.impact;
+    }
+
+    // Filtro opcional por longitude exacto
+    if (req.query.longitude) {
+      query.longitude = parseFloat(req.query.longitude);
+    }
+
+    // Filtro opcional por latitude exacto
+    if (req.query.latitude) {
+      query.latitude = parseFloat(req.query.latitude);
+    }
+
+    db_PRA.find(query, (err, docs) => {
+
+      if (err) {
+        return res.status(500).send({ error: "Database error" });
+      }
+
+      if (docs.length === 0) {
+        return res.status(404).send({ message: "No resources found" });
+      }
+
+      return res.status(200).json(docs.map((c)=>{
+        delete c._id; return c;
+      }));
+
+    });
+
+  });
+
+  // -------- GET recurso único (200 OK) ----------
+
+  app.get(`${BASE_PRA}/:country/:from_date`, (req, res) => {
+
+    const country = req.params.country;
+    const from_date = parseInt(req.params.from_date);
+
+    db_PRA.findOne({ country: country, from_date: from_date }, (err, doc) => {
+
+      if (err) {
+        return res.status(500).send({ error: "Database error" });
+      }
+
+      if (!doc) {
+        return res.status(404).send({ message: "Resource not found" });
+      }
+      delete doc._id;
+      return res.status(200).json(doc);
+
+    });
+
   });
 
   // -------- POST crear (201 / 400 / 409) ----------
-  app.post(BASE_PRA, (req, res) => {
-    const obj = req.body;
+  app.post(`${BASE_PRA}`, (req, res) => {
 
-    if ( !obj || typeof obj.country !== "string" || obj.country.trim().length === 0 || !obj.from_date || obj.severity_km2 === undefined || !Number.isFinite(Number(obj.severity_km2)) ) {
-      return res.status(400).json({ error: "Bad Request" });
+    const { country, from_date, to_date, severity_km2 } = req.body;
+
+    // Validar campos obligatorios
+    if (!country || !from_date || !to_date || !severity_km2) {
+      return res.status(400).json({
+        error: "Missing required fields: country, from_date, to_date, severity_km2"
+      });
     }
 
-    const c = db_PRA.filter(x => x.country === obj.country && x.from_date === obj.from_date);
-    if (c.length > 0) return res.status(409).json({ error: `Ya existe una sequía en ${obj.country} con fecha ${obj.from_date}` });
+    // Validar tipos
+    const fromDateNum = parseInt(from_date);
+    const toDateNum = parseInt(to_date);
+    const severityNum = parseFloat(severity_km2);
 
-    const nuevo_id = db_PRA.length > 0 ? Math.max(...db_PRA.map(x => x.id)) + 1 : 1;
-    const nuevaSequia = {
-      id: nuevo_id,
-      country: obj.country,
-      from_date: obj.from_date,
-      to_date: obj.to_date || obj.from_date,
-      severity_km2: Number(obj.severity_km2),
-      alert_level: obj.alert_level || null,
-      alert_score: Number(obj.alert_score) || null,
-      episode_alert_score: Number(obj.episode_alert_score) || null,
-      duration_day: Number(obj.duration_day) || null
-    };
+    if (isNaN(fromDateNum) || isNaN(toDateNum) || isNaN(severityNum)) {
+      return res.status(400).json({ error: "from_date, to_date must be integers and severity_km2 must be a number" });
+    }
 
-    db_PRA.push(nuevaSequia);
-    res.status(201).json(nuevaSequia);
+    // Verificar si ya existe un registro con el mismo country + from_date
+    db_PRA.findOne({ country: country, from_date: fromDateNum }, (err, existing) => {
+
+      if (err) {
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      if (existing) {
+        return res.status(409).json({
+          error: "A record with the same country and from_date already exists",
+          existing
+        });
+      }
+
+      // Crear nuevo registro
+      const newRecord = {
+        country,
+        from_date: fromDateNum,
+        to_date: toDateNum,
+        severity_km2: severityNum
+      };
+
+      delete newRecord._id;
+
+      db_PRA.insert(newRecord, (err, doc) => {
+        if (err) {
+          return res.status(500).json({ error: "Database error" });
+        }
+
+        return res.status(201).json({
+          message: "Record created successfully",
+          record: doc
+        });
+
+      });
+
+    });
+
   });
+
+  // -------- PUT --------------------------------
+app.put(`${BASE_PRA}/:country/:from_date`, (req, res) => {
+
+  const originalCountry = req.params.country;
+  const originalFromDate = parseInt(req.params.from_date);
+
+  const { country, from_date, to_date, severity_km2 } = req.body;
+
+  // Validación de campos obligatorios
+  if (!country || !from_date || !to_date || !severity_km2) {
+    return res.status(400).json({
+      error: "Missing required fields: country, from_date, to_date, severity_km2"
+    });
+  }
+
+  const newFromDate = parseInt(from_date);
+  const newToDate = parseInt(to_date);
+  const newSeverity = parseFloat(severity_km2);
+
+  if (isNaN(newFromDate) || isNaN(newToDate) || isNaN(newSeverity)) {
+    return res.status(400).json({
+      error: "from_date, to_date must be integers and severity_km2 must be a number"
+    });
+  }
+
+  // Buscar el registro original
+  db_PRA.findOne({ country: originalCountry, from_date: originalFromDate }, (err, originalRecord) => {
+
+    if (err) return res.status(500).json({ error: "Database error" });
+    if (!originalRecord) return res.status(404).json({ message: "Resource not found" });
+
+    // Verificar que no exista otro registro con la combinación country + from_date deseada
+    db_PRA.findOne(
+      { country: country, from_date: newFromDate, _id: { $ne: originalRecord._id } },
+      (err, conflict) => {
+
+        if (err) return res.status(500).json({ error: "Database error" });
+
+        if (conflict) {
+          return res.status(409).json({
+            error: "Another record with the same country and from_date already exists",
+            existing: conflict
+          });
+        }
+
+        // Actualizar el registro original
+        const updatedRecord = {
+          country,
+          from_date: newFromDate,
+          to_date: newToDate,
+          severity_km2: newSeverity
+        };
+
+        db_PRA.update(
+          { _id: originalRecord._id },
+          updatedRecord,
+          {},
+          (err, numUpdated) => {
+            if (err) return res.status(500).json({ error: "Database error" });
+
+            return res.status(200).json({
+              message: "Record updated successfully",
+              updated: updatedRecord
+            });
+          }
+        );
+
+      }
+    );
+
+  });
+
+});
 
   // -------- DELETE colección (200 OK) ----------
-  app.delete(BASE_PRA, (req, res) => {
-    db_PRA = [];
-    res.status(200).json({ message: "Todos los datos borrados." });
+  app.delete(`${BASE_PRA}`, (req, res) => {
+
+    db_PRA.remove({}, { multi: true }, (err, numRemoved) => {
+
+      if (err) {
+        return res.status(500).send({ error: "Database error" });
+      }
+
+      return res.status(200).json({
+        message: "All records deleted",
+        totalDeleted: numRemoved
+      });
+
+    });
+
   });
 
 
-  // -------- GET por id (200 / 404) ----------
-  app.get(`${BASE_PRA}/:id`, (req, res) => { // ":id" se usa para indicar que hay un parametro en la url que indica el elemento en especifico
-    const id = Number(req.params.id);
-    const item = db_PRA.find(x => x.id === id);
-    if (!item) return res.status(404).json({ error: `No se ha encontrado el objeto ${id}.` });
-    res.status(200).json(item);
-  });
+  app.delete(`${BASE_PRA}/:country/:from_date`, (req, res) => {
 
-  // -------- PUT por id (200 / 400 / 404 / 409) ----------
-  app.put(`${BASE_PRA}/:id`, (req, res) => {
-    const id = Number(req.params.id);
-    const obj = req.body;
+    const country = req.params.country;
+    const fromDate = parseInt(req.params.from_date);
 
-    if (obj.id !== undefined && Number(obj.id) !== id) {
-      return res.status(400).json({ error: "Bad Request" });
+    if (isNaN(fromDate)) {
+      return res.status(400).json({ error: "from_date must be a number" });
     }
 
-    const idx = db_PRA.findIndex(x => x.id === id);
-    if (idx === -1) return res.status(404).json({ error: "Not Found" });
+    db_PRA.remove(
+      { country: country, from_date: fromDate },
+      {},
+      (err, numRemoved) => {
 
-    if (
-      !obj ||
-      typeof obj.country !== "string" ||
-      obj.country.trim().length === 0 ||
-      !obj.from_date ||
-      obj.severity_km2 === undefined ||
-      !Number.isFinite(Number(obj.severity_km2))
-    ) {
-      return res.status(400).json({ error: "Bad Request" });
-    }
+        if (err) {
+          return res.status(500).json({ error: "Database error" });
+        }
 
-    const conflict = db_PRA.some(x => x.id !== id && x.country === obj.country && x.from_date === obj.from_date);
-    if (conflict) return res.status(409).json({ error: "Conflict" });
+        if (numRemoved === 0) {
+          return res.status(404).json({ message: "Resource not found" });
+        }
 
-    db_PRA[idx] = {
-      id,
-      country: obj.country,
-      from_date: obj.from_date,
-      to_date: obj.to_date || obj.from_date,
-      severity_km2: Number(obj.severity_km2),
-      alert_level: obj.alert_level || null,
-      alert_score: Number(obj.alert_score) || null,
-      episode_alert_score: Number(obj.episode_alert_score) || null,
-      duration_day: Number(obj.duration_day) || null
-    };
+        return res.status(200).json({
+          message: "Resource deleted successfully",
+          deleted: numRemoved
+        });
 
-    res.status(200).json(db_PRA[idx]);
+      }
+    );
+
   });
 
-  // -------- DELETE por id (200 / 404) ----------
-  app.delete(`${BASE_PRA}/:id`, (req, res) => {
-    const id = Number(req.params.id);
-    const idx = db_PRA.findIndex(x => x.id === id);
-    if (idx === -1) return res.status(404).json({ error: `No se ha encontrado el objeto ${id}` });
+//=======================================//
+//================ 405 ==================//
+//=======================================//
 
-    const deleted = db_PRA[idx];
-    db_PRA.splice(idx, 1);
-    res.status(200).json({ message: "Elemento eliminado.", deleted });
-  });
+app.all(BASE_PRA, (req, res) => {
+  res.status(405).json({ error: "Method Not Allowed" });
+});
 
-  app.all(BASE_PRA, (req, res) => {
-    res.status(405).json({ error: "Method Not Allowed" });
-  });
+app.all(`${BASE_PRA}/:country`, (req, res) => {
+  res.status(405).json({ error: "Method Not Allowed" });
+});
+
+app.all(`${BASE_PRA}/:country/:from_date`, (req, res) => {
+  res.status(405).json({ error: "Method Not Allowed" });
+});
+
 }
+
+
 
 /* EJEMPLO PARA PROBAR
 
 {
-  "id": 8,
   "country": "Spain",
-  "from_date": "2020-01-01",
+  "from_date": "2020",
+  "to_date": 2022,
   "severity_km2": 200
 }
 

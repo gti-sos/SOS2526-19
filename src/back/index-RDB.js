@@ -53,6 +53,188 @@ function rdbFindOne(query = {}, projection = { _id: 0, key: 0 }) {
   });
 }
 
+function rdbFindPaged(query = {}, skip = 0, limit = 0, projection = { _id: 0, key: 0 }) {
+  return new Promise((resolve, reject) => {
+    db_RDB
+      .find(query, projection)
+      .sort({ year: 1, country: 1 })
+      .skip(skip)
+      .limit(limit)
+      .exec((err, docs) => {
+        if (err) return reject(err);
+        resolve(docs);
+      });
+  });
+}
+
+const RDB_RESOURCE_FIELDS = [
+  "country",
+  "year",
+  "productivity_hour",
+  "avg_annual_hours",
+  "gpd_per_capita",
+  "human_capital",
+  "capital_stock_worker",
+  "employment",
+  "household_consum",
+  "investment_share"
+];
+
+const RDB_QUERY_FIELDS = [
+  "id",
+  "country",
+  "year",
+  "productivity_hour",
+  "avg_annual_hours",
+  "gpd_per_capita",
+  "human_capital",
+  "capital_stock_worker",
+  "employment",
+  "household_consum",
+  "investment_share",
+  "from",
+  "to",
+  "offset",
+  "limit"
+];
+
+function hasOnlyAllowedKeys(obj, allowedKeys) {
+  return Object.keys(obj).every(k => allowedKeys.includes(k));
+}
+
+function parseFiniteNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeRdbBody(obj) {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+    return { ok: false };
+  }
+
+  if (!hasOnlyAllowedKeys(obj, RDB_RESOURCE_FIELDS)) {
+    return { ok: false };
+  }
+
+  if (typeof obj.country !== "string" || obj.country.trim().length === 0) {
+    return { ok: false };
+  }
+
+  if (!Number.isInteger(obj.year)) {
+    return { ok: false };
+  }
+
+  const numericFields = [
+    "productivity_hour",
+    "avg_annual_hours",
+    "gpd_per_capita",
+    "human_capital",
+    "capital_stock_worker",
+    "employment",
+    "household_consum",
+    "investment_share"
+  ];
+
+  const normalized = {
+    country: obj.country.trim(),
+    year: obj.year
+  };
+
+  for (const field of numericFields) {
+    if (obj[field] === undefined || obj[field] === null) {
+      return { ok: false };
+    }
+
+    const value = parseFiniteNumber(obj[field]);
+    if (value === null) {
+      return { ok: false };
+    }
+
+    normalized[field] = value;
+  }
+
+  return { ok: true, value: normalized };
+}
+
+function buildRdbQueryFromParams(params) {
+  const query = {};
+
+  if (!hasOnlyAllowedKeys(params, RDB_QUERY_FIELDS)) {
+    return { ok: false };
+  }
+
+  if (params.id !== undefined) {
+    const id = Number(params.id);
+    if (!Number.isInteger(id)) return { ok: false };
+    query.id = id;
+  }
+
+  if (params.country !== undefined) {
+    if (typeof params.country !== "string" || params.country.trim().length === 0) {
+      return { ok: false };
+    }
+    query.country = params.country.trim();
+  }
+
+  if (params.year !== undefined && (params.from !== undefined || params.to !== undefined)) {
+    return { ok: false };
+  }
+
+  if (params.year !== undefined) {
+    const year = Number(params.year);
+    if (!Number.isInteger(year)) return { ok: false };
+    query.year = year;
+  } else if (params.from !== undefined || params.to !== undefined) {
+    query.year = {};
+
+    if (params.from !== undefined) {
+      const from = Number(params.from);
+      if (!Number.isInteger(from)) return { ok: false };
+      query.year.$gte = from;
+    }
+
+    if (params.to !== undefined) {
+      const to = Number(params.to);
+      if (!Number.isInteger(to)) return { ok: false };
+      query.year.$lte = to;
+    }
+  }
+
+  const numericFields = [
+    "productivity_hour",
+    "avg_annual_hours",
+    "gpd_per_capita",
+    "human_capital",
+    "capital_stock_worker",
+    "employment",
+    "household_consum",
+    "investment_share"
+  ];
+
+  for (const field of numericFields) {
+    if (params[field] !== undefined) {
+      const value = Number(params[field]);
+      if (!Number.isFinite(value)) return { ok: false };
+      query[field] = value;
+    }
+  }
+
+  let offset = 0;
+  let limit = 0;
+
+  if (params.offset !== undefined) {
+    offset = Number(params.offset);
+    if (!Number.isInteger(offset) || offset < 0) return { ok: false };
+  }
+
+  if (params.limit !== undefined) {
+    limit = Number(params.limit);
+    if (!Number.isInteger(limit) || limit <= 0) return { ok: false };
+  }
+
+  return { ok: true, query, offset, limit };
+}
+
 function rdbInsert(doc) {
   return new Promise((resolve, reject) => {
     db_RDB.insert(doc, (err, newDoc) => {
@@ -261,6 +443,11 @@ app.get(`${BASE_RDB}/loadInitialData`, async (req, res) => {
   }
 });
 
+
+app.get(`${BASE_RDB}/docs`, (req, res) => {
+  res.redirect("https://documenter.getpostman.com/view/52424600/2sBXigKYBq");
+});
+
 // app.use(BASE_RDB, requireApiKey);
 
 
@@ -270,68 +457,13 @@ app.get(`${BASE_RDB}/loadInitialData`, async (req, res) => {
 
 app.get(BASE_RDB, async (req, res) => {
   try {
-    const query = {};
-    const allowedQueries = ["id", "country", "year", "productivity_hour", "from", "to"];
-    const queryKeys = Object.keys(req.query);
+    const built = buildRdbQueryFromParams(req.query);
 
-    const invalidQuery = queryKeys.find(q => !allowedQueries.includes(q));
-    if (invalidQuery) {
+    if (!built.ok) {
       return res.status(400).json({ error: "Bad Request" });
     }
 
-    if (req.query.id) {
-      const id = Number(req.query.id);
-      if (!Number.isInteger(id)) {
-        return res.status(400).json({ error: "Bad Request" });
-      }
-      query.id = id;
-    }
-
-    if (req.query.country) {
-      query.country = req.query.country;
-    }
-
-    if (req.query.productivity_hour) {
-      const productivityHour = Number(req.query.productivity_hour);
-      if (!Number.isFinite(productivityHour)) {
-        return res.status(400).json({ error: "Bad Request" });
-      }
-      query.productivity_hour = productivityHour;
-    }
-
-    if (req.query.year && (req.query.from || req.query.to)) {
-      return res.status(400).json({ error: "Bad Request" });
-    }
-
-    if (req.query.year) {
-      const year = Number(req.query.year);
-      if (!Number.isInteger(year)) {
-        return res.status(400).json({ error: "Bad Request" });
-      }
-      query.year = year;
-    } else if (req.query.from || req.query.to) {
-      query.year = {};
-
-      if (req.query.from) {
-        const from = Number(req.query.from);
-        if (!Number.isInteger(from)) {
-          return res.status(400).json({ error: "Bad Request" });
-        }
-        query.year.$gte = from;
-      }
-
-      if (req.query.to) {
-        const to = Number(req.query.to);
-        if (!Number.isInteger(to)) {
-          return res.status(400).json({ error: "Bad Request" });
-        }
-        query.year.$lte = to;
-      }
-    }
-
-    const result = await rdbFind(query);
-    result.sort((a, b) => a.year - b.year);
-
+    const result = await rdbFindPaged(built.query, built.offset, built.limit);
     return res.status(200).json(result);
   } catch (e) {
     return res.status(500).json({ error: e.message });
@@ -347,22 +479,16 @@ app.get(`${BASE_RDB}/:country`, async (req, res, next) => {
       return next();
     }
 
-    const query = { country };
+    const built = buildRdbQueryFromParams({
+      ...req.query,
+      country
+    });
 
-    if (req.query.from || req.query.to) {
-      const from = Number(req.query.from);
-      const to = Number(req.query.to);
-
-      if (!Number.isInteger(from) || !Number.isInteger(to)) {
-        return res.status(400).json({ error: "Bad Request" });
-      }
-
-      query.year = { $gte: from, $lte: to };
+    if (!built.ok) {
+      return res.status(400).json({ error: "Bad Request" });
     }
 
-    const result = await rdbFind(query);
-    result.sort((a, b) => a.year - b.year);
-
+    const result = await rdbFindPaged(built.query, built.offset, built.limit);
     return res.status(200).json(result);
   } catch (e) {
     return res.status(500).json({ error: e.message });
@@ -397,29 +523,16 @@ app.get(`${BASE_RDB}/:country/:year`, async (req, res) => {
 
 app.post(BASE_RDB, async (req, res) => {
   try {
-    const obj = req.body;
+    const normalized = normalizeRdbBody(req.body);
 
-    if (
-      !obj ||
-      typeof obj.country !== "string" ||
-      obj.country.trim().length === 0 ||
-      !Number.isInteger(obj.year) ||
-      obj.productivity_hour === undefined
-    ) {
-      return res.status(400).json({ error: "Bad Request" });
-    }
-
-    const ph = Number(obj.productivity_hour);
-    if (!Number.isFinite(ph)) {
+    if (!normalized.ok) {
       return res.status(400).json({ error: "Bad Request" });
     }
 
     const created = {
       id: await rdbNextId(),
-      country: obj.country,
-      year: obj.year,
-      productivity_hour: ph,
-      key: `${obj.country}-${obj.year}`
+      ...normalized.value,
+      key: `${normalized.value.country}-${normalized.value.year}`
     };
 
     await rdbInsert(created);
@@ -441,28 +554,21 @@ app.put(`${BASE_RDB}/:country/:year`, async (req, res) => {
   try {
     const country = req.params.country;
     const year = Number(req.params.year);
-    const obj = req.body;
 
     if (!Number.isInteger(year)) {
       return res.status(400).json({ error: "Bad Request" });
     }
 
+    const normalized = normalizeRdbBody(req.body);
+
+    if (!normalized.ok) {
+      return res.status(400).json({ error: "Bad Request" });
+    }
+
     if (
-      !obj ||
-      typeof obj.country !== "string" ||
-      obj.country.trim().length === 0 ||
-      !Number.isInteger(obj.year) ||
-      obj.productivity_hour === undefined
+      normalized.value.country !== country ||
+      normalized.value.year !== year
     ) {
-      return res.status(400).json({ error: "Bad Request" });
-    }
-
-    const ph = Number(obj.productivity_hour);
-    if (!Number.isFinite(ph)) {
-      return res.status(400).json({ error: "Bad Request" });
-    }
-
-    if (obj.country !== country || obj.year !== year) {
       return res.status(400).json({ error: "Bad Request" });
     }
 
@@ -477,10 +583,8 @@ app.put(`${BASE_RDB}/:country/:year`, async (req, res) => {
       {
         $set: {
           id: current.id,
-          country: obj.country,
-          year: obj.year,
-          productivity_hour: ph,
-          key: `${obj.country}-${obj.year}`
+          ...normalized.value,
+          key: `${normalized.value.country}-${normalized.value.year}`
         }
       },
       {}
