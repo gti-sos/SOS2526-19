@@ -18,7 +18,8 @@
     "start": "node index.js",
     "test-workers-productivity": "newman run test/api/api-RDB-tests.json -e test/api/api-RDB-test-env-local.json",
     "test-earthquakes": "newman run test/api/api-JMJ-tests.json -e test/api/api-JMJ-test-env-local.json",
-    "test": "npm run test-workers-productivity && npm run test-earthquakes"
+    "test-droughts": "newman run test/api/api-PRA-tests.json -e test/api/api-PRA-test-env-local.json",
+    "test": "npm run test-workers-productivity && npm run test-earthquakes && npm run test-droughts"
   },
   "dependencies": {
     "@seald-io/nedb": "^4.1.2",
