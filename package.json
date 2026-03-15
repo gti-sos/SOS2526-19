@@ -16,9 +16,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "test-workers-productivity": "newman run postmanRDB/collection_RDB.postman_collection.json -e postmanRDB/render.postman_environment.json",
-    "test-drought-stats": ""
+    "test-workers-productivity": "newman run test/api/api-RDB-tests.json -e test/api/api-RDB-test-env-local.json",
+    "test-earthquakes": "newman run test/api/api-JMJ-tests.json -e test/api/api-JMJ-test-env-local.json",
+    "test": "npm run test-workers-productivity && npm run test-earthquakes"
   },
   "dependencies": {
     "@seald-io/nedb": "^4.1.2",
@@ -29,5 +29,10 @@
     "marked": "^17.0.3",
     "nedb": "^1.8.0",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "newman": "^6.2.2",
+    "start-server-and-test": "^2.1.5",
+    "wait-on": "^9.0.4"
   }
 }

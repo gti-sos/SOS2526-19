@@ -8,15 +8,14 @@
     body {
       font-family: Arial, sans-serif;
       max-width: 900px;
-      margin: 40px auto;
-      padding: 0 20px;
-      line-height: 1.6;
+      padding: 0 40px;
       background: #f7f7f7;
       color: #222;
     }
 
     h1, h2 {
       color: #1f4e79;
+      margin: 0;
     }
 
     .card {
@@ -24,12 +23,14 @@
       border: 1px solid #ddd;
       border-radius: 10px;
       padding: 20px;
-      margin-bottom: 20px;
+      margin: 10px 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     ul {
-      padding-left: 20px;
+      margin: 0; 
+      padding: 10px;
+      margin-left: 30px;
     }
 
     a {
@@ -40,46 +41,28 @@
     a:hover {
       text-decoration: underline;
     }
-
-    code {
-      background: #eee;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
   </style>
 </head>
 <body>
-  <div class="card">
+  <div style="margin-top: 40px;">
     <h1>SOS2526-19</h1>
-    <p>
-      Página de presentación del proyecto SOS2526-19 desplegado en Render.
-    </p>
-    <p>
-      Desde aquí puedes acceder a las rutas principales de la aplicación.
-    </p>
-  </div>
+    <p>Página de presentación del proyecto SOS2526-19 desplegado en Render.</p>
+  
+    <div class="card">
+      <h2>Información general</h2>
+      <ul>
+        <li><a href="/about">/about</a></li>
+      </ul>
+    </div>
 
-  <div class="card">
-    <h2>Información general</h2>
-    <ul>
-      <li><a href="/about">/about</a></li>
-      <li><a href="/cool">/cool</a></li>
-    </ul>
-  </div>
-
-  <div class="card">
-    <h2>APIs desarrolladas</h2>
-    <ul>
-      <li>
-        <a href="/api/v1/workers-productivity">/api/v1/workers-productivity</a>
-      </li>
-      <li>
-        <a href="/api/v1/earthquakes">/api/v1/earthquakes</a>
-      </li>
-      <li>
-        <a href="/api/v1/droughts-data">/api/v2/droughts-data</a>
-      </li>
-    </ul>
+    <div class="card">
+      <h2>APIs desarrolladas</h2>
+      <ul>
+        <li><a href="/api/v1/workers-productivity">/api/v1/workers-productivity</a></li>
+        <li><a href="/api/v1/earthquakes">/api/v1/earthquakes</a></li>
+        <li><a href="/api/v1/droughts-data">/api/v1/droughts-data</a></li>
+      </ul>
+    </div>
   </div>
 </body>
 </html>
