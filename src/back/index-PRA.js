@@ -120,6 +120,9 @@ export function loadBackendPRA(app) {
 
   });
 
+  app.get(`${BASE_PRA}/docs`, (req, res) => {
+    res.redirect("https://documenter.getpostman.com/view/52410080/2sBXigMZ17");
+  });
 
   //app.use(BASE_PRA, requireApiKey);
 
