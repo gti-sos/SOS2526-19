@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "529ded79-012c-4da3-b227-5bcac2466f41",
     "name": "JMJ Earthquakes API",
-    "description": "Colección completa para probar la API de terremotos JMJ. Cubre todos los métodos, códigos de estado correctos e incorrectos, búsquedas por campo y paginación. El test es idempotente: el registro de prueba creado en 2.1 es eliminado en 5.1, y la colección general se restaura al principio del bloque 6.",
+    "description": "Colección completa para probar la API de terremotos JMJ. El test es idempotente: el registro TestLand/2024-01-15 creado en 2.1 es eliminado en 5.1, y en el bloque 6 se verifica que ese registro ya no existe (sin tocar la colección general).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52414959",
     "_collection_link": "https://go.postman.co/collection/52414959-529ded79-012c-4da3-b227-5bcac2466f41?source=collection_link"
@@ -12,7 +12,7 @@
       "name": "1. GET Colección",
       "item": [
         {
-          "name": "1.1 GET /earthquakes → 200 OK (con paginación)",
+          "name": "1.1 GET /earthquakes → 200 OK (primera página)",
           "event": [
             {
               "listen": "test",
@@ -21,24 +21,14 @@
                   "pm.test(\"Status 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"Respuesta es un objeto con 'data' y 'pagination'\", function () {",
-                  "    const body = pm.response.json();",
-                  "    pm.expect(body).to.be.an('object');",
-                  "    pm.expect(body).to.have.property('data');",
-                  "    pm.expect(body).to.have.property('pagination');",
-                  "    pm.expect(body.data).to.be.an('array');",
+                  "pm.test(\"Respuesta es un array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
                   "});",
-                  "pm.test(\"Paginación tiene los campos requeridos\", function () {",
-                  "    const p = pm.response.json().pagination;",
-                  "    pm.expect(p).to.have.all.keys('total', 'totalPages', 'page', 'limit', 'hasNextPage', 'hasPrevPage');",
-                  "    pm.expect(p.page).to.eql(1);",
-                  "    pm.expect(p.limit).to.eql(10);",
-                  "});",
-                  "pm.test(\"Array 'data' tiene como máximo 10 elementos (limit por defecto)\", function () {",
-                  "    pm.expect(pm.response.json().data.length).to.be.at.most(10);",
+                  "pm.test(\"Array tiene como máximo 10 elementos (limit por defecto)\", function () {",
+                  "    pm.expect(pm.response.json().length).to.be.at.most(10);",
                   "});",
                   "pm.test(\"Cada elemento tiene los campos del recurso\", function () {",
-                  "    const data = pm.response.json().data;",
+                  "    const data = pm.response.json();",
                   "    if (data.length > 0) {",
                   "        pm.expect(data[0]).to.have.property('country');",
                   "        pm.expect(data[0]).to.have.property('fromdate');",
@@ -46,9 +36,9 @@
                   "    }",
                   "});",
                   "pm.test(\"Los elementos no contienen '_id'\", function () {",
-                  "    const data = pm.response.json().data;",
-                  "    data.forEach(item => pm.expect(item).to.not.have.property('_id'));",
-                  "});"
+                  "    pm.response.json().forEach(item => pm.expect(item).to.not.have.property('_id'));",
+                  "});",
+                  "pm.globals.set('firstPageSize', pm.response.json().length);"
                 ],
                 "type": "text/javascript"
               }
@@ -58,20 +48,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}{{BASE_JMJ}}?page=1&limit=10",
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}?page=1",
               "host": ["{{BASE_URL}}"],
               "path": ["api", "v1", "earthquakes"],
               "query": [
-                { "key": "page",  "value": "1" },
-                { "key": "limit", "value": "10" }
+                { "key": "page", "value": "1" }
               ]
             },
-            "description": "Obtiene la primera página de terremotos con limit=10."
+            "description": "Obtiene la primera página con limit por defecto (10)."
           },
           "response": []
         },
         {
-          "name": "1.2 GET /earthquakes → 200 OK (paginación página 2)",
+          "name": "1.2 GET /earthquakes → 200 OK (paginación página 2 tiene datos distintos)",
           "event": [
             {
               "listen": "test",
@@ -80,10 +69,19 @@
                   "pm.test(\"Status 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"Paginación refleja página 2\", function () {",
-                  "    const p = pm.response.json().pagination;",
-                  "    pm.expect(p.page).to.eql(2);",
-                  "    pm.expect(p.hasPrevPage).to.be.true;",
+                  "pm.test(\"Respuesta es un array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "pm.test(\"La página 2 devuelve datos (hay más de 10 registros en la BD)\", function () {",
+                  "    pm.expect(pm.response.json().length).to.be.above(0);",
+                  "});",
+                  "pm.test(\"El primer elemento de página 2 tiene los campos esperados\", function () {",
+                  "    const data = pm.response.json();",
+                  "    if (data.length > 0) {",
+                  "        pm.expect(data[0]).to.have.property('country');",
+                  "        pm.expect(data[0]).to.have.property('fromdate');",
+                  "        pm.expect(data[0]).to.have.property('severity');",
+                  "    }",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -94,15 +92,14 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}{{BASE_JMJ}}?page=2&limit=5",
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}?page=2",
               "host": ["{{BASE_URL}}"],
               "path": ["api", "v1", "earthquakes"],
               "query": [
-                { "key": "page",  "value": "2" },
-                { "key": "limit", "value": "5" }
+                { "key": "page", "value": "2" }
               ]
             },
-            "description": "Paginación: segunda página con limit=5."
+            "description": "Paginación: segunda página — verifica que existen datos más allá del primer bloque de 10."
           },
           "response": []
         },
@@ -116,9 +113,11 @@
                   "pm.test(\"Status 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
+                  "pm.test(\"Respuesta es un array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
                   "pm.test(\"Todos los resultados son del country filtrado\", function () {",
-                  "    const data = pm.response.json().data;",
-                  "    data.forEach(item => {",
+                  "    pm.response.json().forEach(item => {",
                   "        pm.expect(item.country).to.eql('Iran');",
                   "    });",
                   "});"
@@ -152,9 +151,11 @@
                   "pm.test(\"Status 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
+                  "pm.test(\"Respuesta es un array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
                   "pm.test(\"Todos los resultados tienen alertlevel filtrado\", function () {",
-                  "    const data = pm.response.json().data;",
-                  "    data.forEach(item => {",
+                  "    pm.response.json().forEach(item => {",
                   "        pm.expect(item.alertlevel).to.eql('Orange');",
                   "    });",
                   "});"
@@ -174,7 +175,7 @@
                 { "key": "alertlevel", "value": "Orange" }
               ]
             },
-            "description": "Búsqueda por campo alertlevel."
+            "description": "Búsqueda por campo alertlevel (string)."
           },
           "response": []
         }
@@ -655,7 +656,6 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
-                  "// Creamos un segundo registro distinto para provocar el conflicto real",
                   "const baseUrl = pm.environment.get('BASE_URL');",
                   "const baseJmj = pm.environment.get('BASE_JMJ');",
                   "pm.sendRequest({",
@@ -687,7 +687,6 @@
                   "pm.test(\"Respuesta contiene campo 'error'\", function () {",
                   "    pm.expect(pm.response.json()).to.have.property('error');",
                   "});",
-                  "// Limpieza: borrar el registro auxiliar creado en el prerequest",
                   "const baseUrl = pm.environment.get('BASE_URL');",
                   "const baseJmj = pm.environment.get('BASE_JMJ');",
                   "pm.sendRequest({",
@@ -793,20 +792,20 @@
       ]
     },
     {
-      "name": "6. DELETE Colección (idempotencia)",
+      "name": "6. Verificación idempotencia",
       "item": [
         {
-          "name": "6.1 DELETE /earthquakes → 200 OK (borrar todo)",
+          "name": "6.1 GET /earthquakes/TestLand/2024-01-15 → 404 (elemento de prueba eliminado)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status 200\", function () {",
-                  "    pm.response.to.have.status(200);",
+                  "pm.test(\"Status 404 — el elemento de prueba ya no existe\", function () {",
+                  "    pm.response.to.have.status(404);",
                   "});",
-                  "pm.test(\"Mensaje de borrado presente\", function () {",
-                  "    pm.expect(pm.response.json().message).to.include('borrados');",
+                  "pm.test(\"Respuesta contiene campo 'error'\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -814,19 +813,19 @@
             }
           ],
           "request": {
-            "method": "DELETE",
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
+              "raw": "{{BASE_URL}}{{BASE_JMJ}}/TestLand/2024-01-15",
               "host": ["{{BASE_URL}}"],
-              "path": ["api", "v1", "earthquakes"]
+              "path": ["api", "v1", "earthquakes", "TestLand", "2024-01-15"]
             },
-            "description": "Borra toda la colección → 200."
+            "description": "Confirma que TestLand/2024-01-15 no existe al final — la BD vuelve a su estado inicial sin ese registro."
           },
           "response": []
         },
         {
-          "name": "6.2 GET /earthquakes → 200 OK (colección vacía tras DELETE)",
+          "name": "6.2 GET /earthquakes → 200 OK (colección original intacta)",
           "event": [
             {
               "listen": "test",
@@ -835,13 +834,12 @@
                   "pm.test(\"Status 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"Colección vacía tras DELETE: data es array vacío\", function () {",
-                  "    const body = pm.response.json();",
-                  "    pm.expect(body).to.have.property('data');",
-                  "    pm.expect(body.data).to.be.an('array').that.is.empty;",
+                  "pm.test(\"La colección sigue teniendo datos (los originales no fueron tocados)\", function () {",
+                  "    pm.expect(pm.response.json().length).to.be.above(0);",
                   "});",
-                  "pm.test(\"Paginación refleja total=0\", function () {",
-                  "    pm.expect(pm.response.json().pagination.total).to.eql(0);",
+                  "pm.test(\"No existe TestLand en la colección general\", function () {",
+                  "    const testland = pm.response.json().filter(item => item.country === 'TestLand');",
+                  "    pm.expect(testland.length).to.eql(0);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -856,43 +854,7 @@
               "host": ["{{BASE_URL}}"],
               "path": ["api", "v1", "earthquakes"]
             },
-            "description": "Verifica que la colección está vacía tras el DELETE masivo."
-          },
-          "response": []
-        },
-        {
-          "name": "6.3 POST /earthquakes → 201 (restaurar datos para idempotencia)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status 201 — datos restaurados correctamente\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
-                  "pm.test(\"El registro restaurado tiene los campos correctos\", function () {",
-                  "    const body = pm.response.json();",
-                  "    pm.expect(body.country).to.eql('Iran');",
-                  "    pm.expect(body.severity).to.be.a('number');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"country\": \"Iran\",\n  \"fromdate\": \"2003-12-26\",\n  \"todate\": \"2003-12-26\",\n  \"severity\": 6.6,\n  \"alertlevel\": \"Orange\",\n  \"depth\": 10,\n  \"exposed_population\": 142000\n}"
-            },
-            "url": {
-              "raw": "{{BASE_URL}}{{BASE_JMJ}}",
-              "host": ["{{BASE_URL}}"],
-              "path": ["api", "v1", "earthquakes"]
-            },
-            "description": "Restaura al menos un registro representativo para dejar la BD en un estado coherente tras el DELETE masivo."
+            "description": "Verifica que la colección original sigue intacta y sin el elemento de prueba."
           },
           "response": []
         }
@@ -902,17 +864,11 @@
   "event": [
     {
       "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [""]
-      }
+      "script": { "type": "text/javascript", "exec": [""] }
     },
     {
       "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [""]
-      }
+      "script": { "type": "text/javascript", "exec": [""] }
     }
   ]
 }

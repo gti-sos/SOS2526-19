@@ -28,17 +28,24 @@ export function loadBackendJMJ(app) {
 	// ---------------- COLECCIONES ---------------- //
 	// -------- GET colección (200 OK) ----------
 	app.get(BASE_JMJ, (req, res) => {
-		let page = parseInt(req.query.page) || 1;
-		let skip = (page - 1) * limit;
+		const { page: qPage, ...filters } = req.query;
+		const page = parseInt(qPage) || 1;
+		const skip = (page - 1) * limit;
 
-		db.count({}, (err, total) => {
+		const query = {};
+		for (const campo of CAMPOS_PERMITIDOS) {
+			if (filters[campo] !== undefined) {
+				const val = filters[campo];
+				const num = Number(val);
+				query[campo] = (!isNaN(num) && val.trim() !== '') ? num : val;
+			}
+		}
+
+		db.count(query, (err, total) => {
 			if (err) return res.status(500).json({ error: "Error al contar datos." });
 
-			const totalPages = Math.ceil(total / limit);
-
-			db.find({}).skip(skip).limit(limit).exec((err, docs) => {
+			db.find(query).skip(skip).limit(limit).exec((err, docs) => {
 				if (err) return res.status(500).json({ error: "Error al obtener datos." });
-
 				res.status(200).json(docs.map(({ _id, ...rest }) => rest));
 			});
 		});
