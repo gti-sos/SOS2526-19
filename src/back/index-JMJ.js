@@ -22,7 +22,7 @@ const limit = 10;
 export function loadBackendJMJ(app) {
 	// ---------------- REDIRECCIÓN A DOCS ---------------- //
 	app.get(`${BASE_JMJ}/docs`, (req, res) => {
-		res.redirect("https://documenter.getpostman.com/view/52414959/2sBXigMDSj");
+		res.redirect("https://documenter.getpostman.com/view/52414959/2sBXigMZPE");
 	});
 
 	// ---------------- COLECCIONES ---------------- //
