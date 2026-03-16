@@ -19,3 +19,8 @@
 {"country":"TestLand2","fromdate":"2024-06-01","todate":"2024-06-01","severity":4,"alertlevel":null,"depth":null,"exposed_population":null,"_id":"OLSXKHhSLnnXVYFI"}
 {"$$deleted":true,"_id":"OLSXKHhSLnnXVYFI"}
 {"$$deleted":true,"_id":"bJEMYl5z4ZoChxQy"}
+{"country":"TestLand","fromdate":"2024-01-15","todate":"2024-01-16","severity":6.5,"alertlevel":"Orange","depth":10,"exposed_population":50000,"_id":"7OpTsK62RQjdGwUN"}
+{"country":"TestLand","fromdate":"2024-01-15","todate":"2024-01-17","severity":7.2,"alertlevel":"Red","depth":15,"exposed_population":80000,"_id":"7OpTsK62RQjdGwUN"}
+{"country":"TestLand2","fromdate":"2024-06-01","todate":"2024-06-01","severity":4,"alertlevel":null,"depth":null,"exposed_population":null,"_id":"fbQJvidFeruCNn63"}
+{"$$deleted":true,"_id":"fbQJvidFeruCNn63"}
+{"$$deleted":true,"_id":"7OpTsK62RQjdGwUN"}
