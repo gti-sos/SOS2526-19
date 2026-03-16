@@ -32,6 +32,23 @@ export function loadBackendJMJ(app) {
 		res.redirect("https://documenter.getpostman.com/view/52414959/2sBXigMZPE");
 	});
 
+	// ---------------- LOAD INITIAL DATA ---------------- //
+
+	app.get(`${BASE_JMJ}/loadInitialData`, (req, res) => {
+		db.count({}, (err, count) => {
+			if (count === 0) {
+				const initial = cargarDatos(EXCEL_FILE, SHEET_NAME_JMJ);
+				const db_JMJ = initial.map((x) => ({ ...x }));
+				
+				db.insert(db_JMJ, (err) => {
+					if (err) console.error("Error insertando datos iniciales:", err);
+				});
+			}
+		});
+
+		return res.status(201).json({ message: `DB inicializada.` });
+	});
+
 	// ---------------- COLECCIONES ---------------- //
 	// -------- GET colección (200 OK) ----------
 	app.get(BASE_JMJ, (req, res) => {
