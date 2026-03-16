@@ -8,11 +8,18 @@ const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 const SHEET_NAME_JMJ = "Javier"; 
 const BASE_JMJ = `/api/v1/earthquakes`;
 
-const db = new dataStore();
+const db = new dataStore({ filename: "./earthquakes.db", autoload: true });
 
-let initial = cargarDatos(EXCEL_FILE, SHEET_NAME_JMJ);
-let db_JMJ = initial.map((x) => ({ ...x }));
-db.insert(db_JMJ);
+db.count({}, (err, count) => {
+	if (count === 0) {
+		const initial = cargarDatos(EXCEL_FILE, SHEET_NAME_JMJ);
+		const db_JMJ = initial.map((x) => ({ ...x }));
+		
+		db.insert(db_JMJ, (err) => {
+			if (err) console.error("Error insertando datos iniciales:", err);
+		});
+	}
+});
 
 // ---------------- VARIABLES SCRIPT ---------------- //
 const CAMPOS_PERMITIDOS = new Set([	"country", "fromdate", "todate", "severity", "alertlevel", "depth", "exposed_population" ]);
