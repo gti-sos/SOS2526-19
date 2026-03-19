@@ -1,7 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
 
-  export let data;
+   let { data } = $props();
 
   const API_BASE = '/api/v1/workers-productivity';
 
