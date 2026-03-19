@@ -1,28 +1,12 @@
 name: CI_CD
-
 on: [push, pull_request]
-
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
+        uses: actions/checkout@v6
       - name: Install dependencies
         run: npm install
-
-      - name: Arrancar servidor en segundo plano
-        run: npm start &
-
-      - name: Esperar a que el servidor esté listo
-        run: npx wait-on http://localhost:3000
-
-      - name: Ejecutar tests
+      - name: test
         run: npm test

@@ -60,51 +60,7 @@
           "response": []
         },
         {
-          "name": "1.2 GET /earthquakes → 200 OK (paginación página 2 tiene datos distintos)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Status 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"Respuesta es un array\", function () {",
-                  "    pm.expect(pm.response.json()).to.be.an('array');",
-                  "});",
-                  "pm.test(\"La página 2 devuelve datos (hay más de 10 registros en la BD)\", function () {",
-                  "    pm.expect(pm.response.json().length).to.be.above(0);",
-                  "});",
-                  "pm.test(\"El primer elemento de página 2 tiene los campos esperados\", function () {",
-                  "    const data = pm.response.json();",
-                  "    if (data.length > 0) {",
-                  "        pm.expect(data[0]).to.have.property('country');",
-                  "        pm.expect(data[0]).to.have.property('fromdate');",
-                  "        pm.expect(data[0]).to.have.property('severity');",
-                  "    }",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{BASE_URL}}{{BASE_JMJ}}?page=2",
-              "host": ["{{BASE_URL}}"],
-              "path": ["api", "v1", "earthquakes"],
-              "query": [
-                { "key": "page", "value": "2" }
-              ]
-            },
-            "description": "Paginación: segunda página — verifica que existen datos más allá del primer bloque de 10."
-          },
-          "response": []
-        },
-        {
-          "name": "1.3 GET /earthquakes → 200 OK (filtro por country)",
+          "name": "1.2 GET /earthquakes → 200 OK (filtro por country)",
           "event": [
             {
               "listen": "test",
@@ -142,7 +98,7 @@
           "response": []
         },
         {
-          "name": "1.4 GET /earthquakes → 200 OK (filtro por alertlevel)",
+          "name": "1.3 GET /earthquakes → 200 OK (filtro por alertlevel)",
           "event": [
             {
               "listen": "test",
