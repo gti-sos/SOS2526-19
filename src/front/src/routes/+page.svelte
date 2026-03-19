@@ -5,7 +5,7 @@
     {
       name: "Raúl de los Reyes Benítez",
       resource: "workers-productivity",
-      frontend: "",
+      frontend: `${BASE}/workers-productivity`,
       api: `${BASE}/api/v1/workers-productivity`,
       docs: `${BASE}/api/v1/workers-productivity/docs`
     },
@@ -50,7 +50,7 @@
     <li>
       {#if member.frontend}
         <a href={member.frontend} target="_blank">
-          Frontend de {member.name}
+          {member.frontend}
         </a>
       {:else}
         Frontend de {member.name} (pendiente)

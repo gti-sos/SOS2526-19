@@ -8,8 +8,5 @@
 {"id":1,"country":"Spain","year":1995,"productivity_hour":570.84,"avg_annual_hours":1735.91,"gpd_per_capita":24852.84,"human_capital":2.55,"capital_stock_worker":347173.85,"employment":13.801,"household_consum":736156.313,"investment_share":0.278,"key":"Spain-1995","_id":"nm7dF4gPOprjPugJ"}
 {"id":3,"country":"Spain","year":1997,"productivity_hour":631.278,"avg_annual_hours":1743.21,"gpd_per_capita":27086.133,"human_capital":2.585,"capital_stock_worker":341476.716,"employment":14.537,"household_consum":815878.75,"investment_share":0.257,"key":"Spain-1997","_id":"on0DiLOicaoC19C0"}
 {"id":5,"country":"Spain","year":1999,"productivity_hour":696.896,"avg_annual_hours":1758.4,"gpd_per_capita":30114.034,"human_capital":2.619,"capital_stock_worker":316934.242,"employment":15.89,"household_consum":926556.875,"investment_share":0.269,"key":"Spain-1999","_id":"sFTH5qaGZTOciR8Z"}
-{"id":11,"country":"Spain","year":1990,"productivity_hour":65,"avg_annual_hours":5,"gpd_per_capita":7575,"human_capital":7,"capital_stock_worker":67,"employment":5,"household_consum":7,"investment_share":6,"key":"Spain-1990","_id":"zrGCmuxJ2IZlEdUo"}
 {"$$indexCreated":{"fieldName":"key","unique":true,"sparse":false}}
 {"$$indexCreated":{"fieldName":"key","unique":true}}
-{"id":11,"country":"Spain","year":1990,"productivity_hour":65,"avg_annual_hours":5,"gpd_per_capita":7575,"human_capital":7,"capital_stock_worker":67,"employment":5,"household_consum":7,"investment_share":6,"key":"Spain-1990","_id":"zrGCmuxJ2IZlEdUo"}
-{"$$deleted":true,"_id":"zrGCmuxJ2IZlEdUo"}
