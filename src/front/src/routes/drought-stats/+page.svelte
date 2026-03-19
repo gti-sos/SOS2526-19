@@ -1,14 +1,59 @@
 <script>
   import { onMount } from 'svelte';
+  import { traducirErrorApiDrought } from '$lib/apiMessagesDroughtStats';
+
+
+
+  /**
+   * @typedef {Object} DroughtStatsRecord
+   * @property {string} description
+   * @property {string} alert_level
+   * @property {number} alert_score
+   * @property {number} episode_alert_score
+   * @property {string} country
+   * @property {number} from_date
+   * @property {number} to_date
+   * @property {number} severity_km2
+   * @property {string} iso
+   * @property {string} gdacs_id
+   * @property {number} duration_day
+   * @property {string} impact
+   * @property {number} longitude
+   * @property {number} latitude
+   */
+
+  /**
+   * @typedef {Object} DroughtStatsForm
+   * @property {string} description
+   * @property {string} alert_level
+   * @property {string|number} alert_score
+   * @property {string|number} episode_alert_score
+   * @property {string} country
+   * @property {string|number} from_date
+   * @property {string|number} to_date
+   * @property {string|number} severity_km2
+   * @property {string} iso
+   * @property {string} gdacs_id
+   * @property {string|number} duration_day
+   * @property {string} impact
+   * @property {string|number} longitude
+   * @property {string|number} latitude
+   */
 
   
   const API_BASE = '/api/v1/drought-stats';
+  const NOMBRE_RECURSO = 'registro de sequía';
+
+  /** @type {DroughtStatsRecord[]} */
 
   let registros = $state([]);
   let cargando = $state(false);
 
   let mensaje = $state('');
   let tipoMensaje = $state('');
+
+  /** @type {DroughtStatsForm} */
+
 
   let formulario = $state({
     description: '',
@@ -27,6 +72,11 @@
     latitude: ''
   });
 
+  /**
+   * @param {string} texto
+   * @param {'exito' | 'error'} [tipo='exito']
+   */
+
   function mostrarMensaje(texto, tipo = 'exito') {
     mensaje = texto;
     tipoMensaje = tipo;
@@ -35,29 +85,6 @@
   function limpiarMensaje() {
     mensaje = '';
     tipoMensaje = '';
-  }
-
-  function traducirError(status, contexto = {}) {
-    if (status === 400) {
-      return 'Los datos introducidos no son válidos. Revisa el formulario.';
-    }
-
-    if (status === 404) {
-      if (contexto.country && contexto.from_date) {
-        return `No existe ningún registro para ${contexto.country} en el año ${contexto.from_date}.`;
-      }
-      return 'No se ha encontrado la información solicitada.';
-    }
-
-    if (status === 405) {
-      return 'La operación solicitada no está permitida.';
-    }
-
-    if (status === 409) {
-      return `Ya existe un registro para ${contexto.country || 'ese país'} en el año ${contexto.year || 'indicado'}.`;
-    }
-
-    return 'Se ha producido un error inesperado. Inténtalo de nuevo más tarde.';
   }
 
   function resetFormulario() {
@@ -76,6 +103,10 @@
     formulario.longitude = '';
     formulario.latitude = '';
   }
+
+  /**
+   * @returns {DroughtStatsRecord}
+   */
 
   function normalizarPayload() {
     return {
@@ -104,12 +135,17 @@
       const respuesta = await fetch(API_BASE);
 
       if (!respuesta.ok) {
-        mostrarMensaje(traducirError(respuesta.status), 'error');
+        mostrarMensaje(
+          traducirErrorApiDrought(respuesta.status, {
+            recurso: NOMBRE_RECURSO
+          }),
+          'error'
+        );
         registros = [];
         return;
       }
 
-      registros = await respuesta.json();
+      registros = /** @type {DroughtStatsRecord[]} */ await respuesta.json();
     } catch (error) {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
       registros = [];
@@ -134,7 +170,8 @@
 
       if (!respuesta.ok) {
         mostrarMensaje(
-          traducirError(respuesta.status, {
+          traducirErrorApiDrought(respuesta.status, {
+            recurso: NOMBRE_RECURSO,
             country: payload.country,
             from_date: payload.from_date
           }),
@@ -163,7 +200,12 @@
       });
 
       if (!respuesta.ok) {
-        mostrarMensaje(traducirError(respuesta.status), 'error');
+        mostrarMensaje(
+          traducirErrorApiDrought(respuesta.status, {
+            recurso: NOMBRE_RECURSO
+          }),
+          'error'
+        );
         return;
       }
 
@@ -173,6 +215,11 @@
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
     }
   }
+
+  /**
+   * @param {string} country
+   * @param {number} from_date
+   */
 
   async function borrarRegistro(country, from_date) {
     limpiarMensaje();
@@ -186,7 +233,14 @@
       });
 
       if (!respuesta.ok) {
-        mostrarMensaje(traducirError(respuesta.status, { country, from_date }), 'error');
+        mostrarMensaje(
+          traducirErrorApiDrought(respuesta.status, {
+            recurso: NOMBRE_RECURSO,
+            country,
+            from_date
+          }),
+          'error'
+        );
         return;
       }
 
