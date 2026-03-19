@@ -56,4 +56,3 @@ export function cargarDatos(archivo, hoja) {
     if (!sheet) throw new Error("No existe la hoja: " + hoja);
     return xlsx.utils.sheet_to_json(sheet, { defval: null });
 }
-//
