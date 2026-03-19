@@ -1,7 +1,9 @@
 <script>
   import { onMount } from 'svelte';
+  import { traducirErrorApi } from '$lib/apiMessages';
 
   const API_BASE = '/api/v1/workers-productivity';
+  const NOMBRE_RECURSO = 'registro de productividad laboral';
 
   let registros = $state([]);
   let cargando = $state(false);
@@ -30,29 +32,6 @@
   function limpiarMensaje() {
     mensaje = '';
     tipoMensaje = '';
-  }
-
-  function traducirError(status, contexto = {}) {
-    if (status === 400) {
-      return 'Los datos introducidos no son válidos. Revisa el formulario.';
-    }
-
-    if (status === 404) {
-      if (contexto.country && contexto.year) {
-        return `No existe ningún registro para ${contexto.country} en el año ${contexto.year}.`;
-      }
-      return 'No se ha encontrado la información solicitada.';
-    }
-
-    if (status === 405) {
-      return 'La operación solicitada no está permitida.';
-    }
-
-    if (status === 409) {
-      return `Ya existe un registro para ${contexto.country || 'ese país'} en el año ${contexto.year || 'indicado'}.`;
-    }
-
-    return 'Se ha producido un error inesperado. Inténtalo de nuevo más tarde.';
   }
 
   function resetFormulario() {
@@ -91,7 +70,12 @@
       const respuesta = await fetch(API_BASE);
 
       if (!respuesta.ok) {
-        mostrarMensaje(traducirError(respuesta.status), 'error');
+        mostrarMensaje(
+          traducirErrorApi(respuesta.status, {
+            recurso: NOMBRE_RECURSO
+          }),
+          'error'
+        );
         registros = [];
         return;
       }
@@ -121,7 +105,8 @@
 
       if (!respuesta.ok) {
         mostrarMensaje(
-          traducirError(respuesta.status, {
+          traducirErrorApi(respuesta.status, {
+            recurso: NOMBRE_RECURSO,
             country: payload.country,
             year: payload.year
           }),
@@ -150,7 +135,12 @@
       });
 
       if (!respuesta.ok) {
-        mostrarMensaje(traducirError(respuesta.status), 'error');
+        mostrarMensaje(
+          traducirErrorApi(respuesta.status, {
+            recurso: NOMBRE_RECURSO
+          }),
+          'error'
+        );
         return;
       }
 
@@ -173,7 +163,14 @@
       });
 
       if (!respuesta.ok) {
-        mostrarMensaje(traducirError(respuesta.status, { country, year }), 'error');
+        mostrarMensaje(
+          traducirErrorApi(respuesta.status, {
+            recurso: NOMBRE_RECURSO,
+            country,
+            year
+          }),
+          'error'
+        );
         return;
       }
 
