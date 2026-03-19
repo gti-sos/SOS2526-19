@@ -2,15 +2,45 @@
   import { onMount } from 'svelte';
   import { traducirErrorApi } from '$lib/apiMessages';
 
+  /**
+   * @typedef {Object} WorkersProductivityRecord
+   * @property {string} country
+   * @property {number} year
+   * @property {number} productivity_hour
+   * @property {number} avg_annual_hours
+   * @property {number} gpd_per_capita
+   * @property {number} human_capital
+   * @property {number} capital_stock_worker
+   * @property {number} employment
+   * @property {number} household_consum
+   * @property {number} investment_share
+   */
+
+  /**
+   * @typedef {Object} WorkersProductivityForm
+   * @property {string} country
+   * @property {string|number} year
+   * @property {string|number} productivity_hour
+   * @property {string|number} avg_annual_hours
+   * @property {string|number} gpd_per_capita
+   * @property {string|number} human_capital
+   * @property {string|number} capital_stock_worker
+   * @property {string|number} employment
+   * @property {string|number} household_consum
+   * @property {string|number} investment_share
+   */
+
   const API_BASE = '/api/v1/workers-productivity';
   const NOMBRE_RECURSO = 'registro de productividad laboral';
 
+  /** @type {WorkersProductivityRecord[]} */
   let registros = $state([]);
   let cargando = $state(false);
 
   let mensaje = $state('');
   let tipoMensaje = $state('');
 
+  /** @type {WorkersProductivityForm} */
   let formulario = $state({
     country: '',
     year: '',
@@ -24,6 +54,10 @@
     investment_share: ''
   });
 
+  /**
+   * @param {string} texto
+   * @param {'exito' | 'error'} [tipo='exito']
+   */
   function mostrarMensaje(texto, tipo = 'exito') {
     mensaje = texto;
     tipoMensaje = tipo;
@@ -47,6 +81,9 @@
     formulario.investment_share = '';
   }
 
+  /**
+   * @returns {WorkersProductivityRecord}
+   */
   function normalizarPayload() {
     return {
       country: formulario.country.trim(),
@@ -80,7 +117,7 @@
         return;
       }
 
-      registros = await respuesta.json();
+      registros = /** @type {WorkersProductivityRecord[]} */ (await respuesta.json());
     } catch (error) {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
       registros = [];
@@ -151,6 +188,10 @@
     }
   }
 
+  /**
+   * @param {string} country
+   * @param {number} year
+   */
   async function borrarRegistro(country, year) {
     limpiarMensaje();
 

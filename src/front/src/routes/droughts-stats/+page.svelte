@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
 
+  
   const API_BASE = '/api/v1/drought-stats';
 
   let registros = $state([]);
