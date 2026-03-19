@@ -5,16 +5,23 @@ import express from 'express'; //const express = require("express"); // framewor
 import fs from "fs";
 import { marked } from "marked";
 
+import cors from 'cors';
+
 import { loadBackendPRA } from './src/back/index-PRA.js';
 import { loadBackendRDB } from './src/back/index-RDB.js';
 import { loadBackendJMJ } from './src/back/index-JMJ.js';
+
+import {handler} from './src/front/build/handler.js';
 
 //============ INICIAR LA APP WEB ============//
 export const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 
 export const app = express(); // definimos la app con express
+
+app.use(cors());
+
 app.use(express.json()); // parsea toda peticion de la app a formato JSON
-app.use(express.static("./public"));
+//app.use(express.static("./public"));
 
 const PORT = process.env.PORT || 3000; // Render te da el puerto en process.env.PORT
 app.listen(PORT, console.log(`Server running on port ${PORT}`));
@@ -22,6 +29,8 @@ app.listen(PORT, console.log(`Server running on port ${PORT}`));
 loadBackendPRA(app);
 loadBackendRDB(app);
 loadBackendJMJ(app);
+
+app.use(handler);
 
 app.get("/about", (req, res) => {
     const readme = fs.readFileSync("./README.md", "utf-8");
