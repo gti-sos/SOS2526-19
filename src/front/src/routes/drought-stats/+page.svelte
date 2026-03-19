@@ -255,10 +255,10 @@
 </script>
 
 <svelte:head>
-  <title>Gestión de productividad laboral</title>
+  <title>Gestión de sequías</title>
 </svelte:head>
 
-<h1>Gestión de productividad laboral</h1>
+<h1>Gestión de sequías</h1>
 <p>Desde esta página puedes crear, consultar, editar y eliminar registros.</p>
 
 <p>
@@ -283,22 +283,22 @@
   >
     <label>
       Descripción
-      <input bind:value={formulario.description} required />
+      <input bind:value={formulario.description} />
     </label>
 
     <label>
       Nivel de alerta
-      <input bind:value={formulario.alert_level} required />
+      <input bind:value={formulario.alert_level} />
     </label>
 
     <label>
       Puntuación de alerta
-      <input bind:value={formulario.alert_score} type="number" step="any" required />
+      <input bind:value={formulario.alert_score} type="number" step="any" />
     </label>
 
     <label>
       Episodio puntuación de alerta
-      <input bind:value={formulario.episode_alert_score} type="number" step="any" required />
+      <input bind:value={formulario.episode_alert_score} type="number" step="any" />
     </label>
 
     <label>
@@ -323,32 +323,32 @@
 
     <label>
       ISO
-      <input bind:value={formulario.iso} step="any" required />
+      <input bind:value={formulario.iso} step="any" />
     </label>
 
     <label>
       GDACS_ID
-      <input bind:value={formulario.gdacs_id} step="any" required />
+      <input bind:value={formulario.gdacs_id} step="any" />
     </label>
 
     <label>
       Días de duración
-      <input bind:value={formulario.duration_day} type="number" step="any" required />
+      <input bind:value={formulario.duration_day} type="number" step="any" />
     </label>
 
     <label>
       Impacto
-      <input bind:value={formulario.impact} step="any" required />
+      <input bind:value={formulario.impact} step="any" />
     </label>
 
     <label>
       Longitud
-      <input bind:value={formulario.longitude} type="number" step="any" required />
+      <input bind:value={formulario.longitude} type="number" step="any" />
     </label>
 
     <label>
       Latitud
-      <input bind:value={formulario.latitude} type="number" step="any" required />
+      <input bind:value={formulario.latitude} type="number" step="any" />
     </label>
 
     <div class="acciones-formulario">
