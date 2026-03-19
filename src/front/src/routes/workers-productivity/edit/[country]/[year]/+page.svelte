@@ -1,9 +1,11 @@
 <script>
   import { goto } from '$app/navigation';
+  import { traducirErrorApi } from '$lib/apiMessages';
 
   let { data } = $props();
 
   const API_BASE = '/api/v1/workers-productivity';
+  const NOMBRE_RECURSO = 'registro de productividad laboral';
 
   let mensaje = $state('');
   let tipoMensaje = $state('');
@@ -36,26 +38,6 @@
         }
   );
 
-  function traducirError(status, contexto = {}) {
-    if (status === 400) {
-      return 'Los datos introducidos no son válidos. Revisa el formulario.';
-    }
-
-    if (status === 404) {
-      return `No existe ningún registro para ${contexto.country || 'ese país'} en el año ${contexto.year || 'indicado'}.`;
-    }
-
-    if (status === 405) {
-      return 'La operación solicitada no está permitida.';
-    }
-
-    if (status === 409) {
-      return `Ya existe un registro para ${contexto.country || 'ese país'} en el año ${contexto.year || 'indicado'}.`;
-    }
-
-    return 'Se ha producido un error inesperado. Inténtalo de nuevo más tarde.';
-  }
-
   async function guardarCambios() {
     mensaje = '';
     tipoMensaje = '';
@@ -86,7 +68,8 @@
       );
 
       if (!respuesta.ok) {
-        mensaje = traducirError(respuesta.status, {
+        mensaje = traducirErrorApi(respuesta.status, {
+          recurso: NOMBRE_RECURSO,
           country: payload.country,
           year: payload.year
         });
@@ -119,7 +102,11 @@
 
 {#if data.error || !data.resource}
   <div class="mensaje error">
-    No existe ningún registro para {data.country} en el año {data.year}.
+    {traducirErrorApi(data.error ?? 404, {
+      recurso: NOMBRE_RECURSO,
+      country: data.country,
+      year: data.year
+    })}
   </div>
 {:else}
   {#if mensaje}
