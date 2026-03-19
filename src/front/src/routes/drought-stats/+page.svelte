@@ -355,7 +355,7 @@
               <td>{registro.longitude}</td>
               <td>{registro.latitude}</td>
               <td class="acciones-celda">
-                <a href={`/workers-productivity/edit/${encodeURIComponent(registro.country)}/${registro.from_date}`}>
+                <a href={`/drought-stats/edit/${encodeURIComponent(registro.country)}/${registro.from_date}`}>
                   Editar
                 </a>
                 <button
