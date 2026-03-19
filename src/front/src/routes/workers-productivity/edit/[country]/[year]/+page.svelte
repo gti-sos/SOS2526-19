@@ -1,27 +1,40 @@
 <script>
   import { goto } from '$app/navigation';
 
-   let { data } = $props();
+  let { data } = $props();
 
   const API_BASE = '/api/v1/workers-productivity';
 
-  let mensaje = '';
-  let tipoMensaje = '';
+  let mensaje = $state('');
+  let tipoMensaje = $state('');
 
-  let formulario = data.resource
-    ? {
-        country: data.resource.country ?? '',
-        year: data.resource.year ?? '',
-        productivity_hour: data.resource.productivity_hour ?? '',
-        avg_annual_hours: data.resource.avg_annual_hours ?? '',
-        gpd_per_capita: data.resource.gpd_per_capita ?? '',
-        human_capital: data.resource.human_capital ?? '',
-        capital_stock_worker: data.resource.capital_stock_worker ?? '',
-        employment: data.resource.employment ?? '',
-        household_consum: data.resource.household_consum ?? '',
-        investment_share: data.resource.investment_share ?? ''
-      }
-    : null;
+  let formulario = $state(
+    data.resource
+      ? {
+          country: data.resource.country ?? '',
+          year: data.resource.year ?? '',
+          productivity_hour: data.resource.productivity_hour ?? '',
+          avg_annual_hours: data.resource.avg_annual_hours ?? '',
+          gpd_per_capita: data.resource.gpd_per_capita ?? '',
+          human_capital: data.resource.human_capital ?? '',
+          capital_stock_worker: data.resource.capital_stock_worker ?? '',
+          employment: data.resource.employment ?? '',
+          household_consum: data.resource.household_consum ?? '',
+          investment_share: data.resource.investment_share ?? ''
+        }
+      : {
+          country: '',
+          year: '',
+          productivity_hour: '',
+          avg_annual_hours: '',
+          gpd_per_capita: '',
+          human_capital: '',
+          capital_stock_worker: '',
+          employment: '',
+          household_consum: '',
+          investment_share: ''
+        }
+  );
 
   function traducirError(status, contexto = {}) {
     if (status === 400) {
@@ -104,7 +117,7 @@
   <a href="/workers-productivity">Volver al listado</a>
 </p>
 
-{#if data.error || !formulario}
+{#if data.error || !data.resource}
   <div class="mensaje error">
     No existe ningún registro para {data.country} en el año {data.year}.
   </div>
@@ -115,7 +128,13 @@
     </div>
   {/if}
 
-  <form on:submit|preventDefault={guardarCambios} class="formulario">
+  <form
+    onsubmit={(event) => {
+      event.preventDefault();
+      guardarCambios();
+    }}
+    class="formulario"
+  >
     <label>
       País
       <input bind:value={formulario.country} required />
@@ -168,7 +187,9 @@
 
     <div class="acciones-formulario">
       <button type="submit">Guardar cambios</button>
-      <button type="button" on:click={() => goto('/workers-productivity')}>Cancelar</button>
+      <button type="button" onclick={() => goto('/workers-productivity')}>
+        Cancelar
+      </button>
     </div>
   </form>
 {/if}

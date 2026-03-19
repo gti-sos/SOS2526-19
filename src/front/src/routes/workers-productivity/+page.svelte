@@ -3,13 +3,13 @@
 
   const API_BASE = '/api/v1/workers-productivity';
 
-  let registros = [];
-  let cargando = false;
+  let registros = $state([]);
+  let cargando = $state(false);
 
-  let mensaje = '';
-  let tipoMensaje = '';
+  let mensaje = $state('');
+  let tipoMensaje = $state('');
 
-  let formulario = {
+  let formulario = $state({
     country: '',
     year: '',
     productivity_hour: '',
@@ -20,7 +20,7 @@
     employment: '',
     household_consum: '',
     investment_share: ''
-  };
+  });
 
   function mostrarMensaje(texto, tipo = 'exito') {
     mensaje = texto;
@@ -56,18 +56,16 @@
   }
 
   function resetFormulario() {
-    formulario = {
-      country: '',
-      year: '',
-      productivity_hour: '',
-      avg_annual_hours: '',
-      gpd_per_capita: '',
-      human_capital: '',
-      capital_stock_worker: '',
-      employment: '',
-      household_consum: '',
-      investment_share: ''
-    };
+    formulario.country = '';
+    formulario.year = '';
+    formulario.productivity_hour = '';
+    formulario.avg_annual_hours = '';
+    formulario.gpd_per_capita = '';
+    formulario.human_capital = '';
+    formulario.capital_stock_worker = '';
+    formulario.employment = '';
+    formulario.household_consum = '';
+    formulario.investment_share = '';
   }
 
   function normalizarPayload() {
@@ -91,6 +89,7 @@
 
     try {
       const respuesta = await fetch(API_BASE);
+
       if (!respuesta.ok) {
         mostrarMensaje(traducirError(respuesta.status), 'error');
         registros = [];
@@ -208,7 +207,13 @@
 <section class="bloque">
   <h2>Crear nuevo registro</h2>
 
-  <form on:submit|preventDefault={crearRegistro} class="formulario">
+  <form
+    onsubmit={(event) => {
+      event.preventDefault();
+      crearRegistro();
+    }}
+    class="formulario"
+  >
     <label>
       País
       <input bind:value={formulario.country} required />
@@ -261,7 +266,7 @@
 
     <div class="acciones-formulario">
       <button type="submit">Crear registro</button>
-      <button type="button" on:click={resetFormulario}>Limpiar formulario</button>
+      <button type="button" onclick={resetFormulario}>Limpiar formulario</button>
     </div>
   </form>
 </section>
@@ -270,8 +275,8 @@
   <h2>Listado de registros</h2>
 
   <div class="acciones-superiores">
-    <button on:click={cargarRegistros}>Actualizar lista</button>
-    <button on:click={borrarTodos}>Borrar todos los datos</button>
+    <button type="button" onclick={cargarRegistros}>Actualizar lista</button>
+    <button type="button" onclick={borrarTodos}>Borrar todos los datos</button>
   </div>
 
   {#if cargando}
@@ -310,10 +315,13 @@
               <td>{registro.household_consum}</td>
               <td>{registro.investment_share}</td>
               <td class="acciones-celda">
-                <a href={`/workers-productivity/editar/${encodeURIComponent(registro.country)}/${registro.year}`}>
+                <a href={`/workers-productivity/edit/${encodeURIComponent(registro.country)}/${registro.year}`}>
                   Editar
                 </a>
-                <button on:click={() => borrarRegistro(registro.country, registro.year)}>
+                <button
+                  type="button"
+                  onclick={() => borrarRegistro(registro.country, registro.year)}
+                >
                   Eliminar
                 </button>
               </td>
