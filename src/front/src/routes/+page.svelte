@@ -11,10 +11,10 @@
     },
     {
       name: "Pablo Rodríguez Armesto",
-      resource: "droughts",
+      resource: "drought-stats",
       frontend: `${BASE}/drought-stats`,
       api: `${BASE}/api/v1/drought-stats`,
-      docs: `${BASE}/api/v1/droughts/docs`
+      docs: `${BASE}/api/v1/drought-stats/docs`
     },
     {
       name: "Javier",
