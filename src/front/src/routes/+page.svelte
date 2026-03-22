@@ -19,7 +19,7 @@
     {
       name: "Javier Morales Jiménez",
       resource: "earthquakes",
-      frontend: "${BASE}/earthquakes",
+      frontend: `${BASE}/earthquakes`,
       api: `${BASE}/api/v1/earthquakes`,
       docs: `${BASE}/api/v1/earthquakes/docs`
     }
