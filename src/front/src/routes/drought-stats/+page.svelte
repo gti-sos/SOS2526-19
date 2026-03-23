@@ -128,7 +128,7 @@
   }
 
   async function cargarRegistros() {
-    limpiarMensaje();
+    //limpiarMensaje();
     cargando = true;
 
     try {
@@ -244,7 +244,7 @@
         return;
       }
 
-      mostrarMensaje(`El registro de ${country} en ${from_date} se ha eliminado correctamente.`, 'exito');
+      mostrarMensaje('El registro se ha eliminado correctamente.', 'exito');
       await cargarRegistros();
     } catch (error) {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
