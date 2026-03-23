@@ -1,6 +1,7 @@
 /**
- * @typedef {Object} ErrorContext
+ * @typedef {Object} MessageContext
  * @property {string} [recurso]
+ * @property {string} [recursoPlural]
  * @property {string} [country]
  * @property {number|string} [year]
  */
@@ -9,7 +10,7 @@
  * Traduce un código HTTP de la API a un mensaje comprensible.
  *
  * @param {number} status
- * @param {ErrorContext} [contexto={}]
+ * @param {MessageContext} [contexto={}]
  * @returns {string}
  */
 export function traducirErrorApi(status, contexto = {}) {
@@ -52,4 +53,50 @@ export function traducirErrorApi(status, contexto = {}) {
   }
 
   return 'Se ha producido un error inesperado. Inténtalo de nuevo más tarde.';
+}
+
+/**
+ * Devuelve un mensaje de éxito comprensible para el usuario.
+ *
+ * @param {'crear' | 'eliminar' | 'eliminarTodos' | 'editar'} accion
+ * @param {MessageContext} [contexto={}]
+ * @returns {string}
+ */
+export function traducirExitoApi(accion, contexto = {}) {
+  const {
+    recurso = 'registro',
+    recursoPlural = 'registros',
+    country,
+    year
+  } = contexto;
+
+  if (accion === 'crear') {
+    if (country && year !== undefined && year !== null && year !== '') {
+      return `Se ha creado correctamente el ${recurso} de ${country} en el año ${year}.`;
+    }
+
+    return `Se ha creado correctamente el ${recurso}.`;
+  }
+
+  if (accion === 'eliminar') {
+    if (country && year !== undefined && year !== null && year !== '') {
+      return `Se ha eliminado correctamente el ${recurso} de ${country} en el año ${year}.`;
+    }
+
+    return `Se ha eliminado correctamente el ${recurso}.`;
+  }
+
+  if (accion === 'eliminarTodos') {
+    return `Se han eliminado correctamente todos los ${recursoPlural}.`;
+  }
+
+  if (accion === 'editar') {
+    if (country && year !== undefined && year !== null && year !== '') {
+      return `Se han guardado correctamente los cambios del ${recurso} de ${country} en el año ${year}.`;
+    }
+
+    return `Se han guardado correctamente los cambios del ${recurso}.`;
+  }
+
+  return 'La operación se ha realizado correctamente.';
 }
