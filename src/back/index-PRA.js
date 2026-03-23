@@ -275,7 +275,6 @@ export function loadBackendPRA(app) {
 
   // -------- POST crear (201 / 400 / 409) ----------
   app.post(`${BASE_PRA}`, (req, res) => {
-
     const { country, from_date, to_date, severity_km2 } = req.body;
 
     // Validar campos obligatorios
@@ -294,44 +293,46 @@ export function loadBackendPRA(app) {
       return res.status(400).json({ error: "from_date, to_date must be integers and severity_km2 must be a number" });
     }
 
-    // Verificar si ya existe un registro con el mismo country + from_date
+    // Verificar duplicados
     db_PRA.findOne({ country: country, from_date: fromDateNum }, (err, existing) => {
+      if (err) return res.status(500).json({ error: "Database error" });
+      if (existing) return res.status(409).json({
+        error: "A record with the same country and from_date already exists",
+        existing
+      });
 
-      if (err) {
-        return res.status(500).json({ error: "Database error" });
-      }
+      // Definir todos los campos opcionales, asignando null si no vienen en req.body
+      const optionalFields = {
+        description: req.body.description ?? null,
+        alert_level: req.body.alert_level ?? null,
+        alert_score: req.body.alert_score ?? null,
+        episode_alert_score: req.body.episode_alert_score ?? null,
+        iso: req.body.iso ?? null,
+        gdacs_id: req.body.gdacs_id ?? null,
+        duration_day: req.body.duration_day ?? null,
+        impact: req.body.impact ?? null,
+        longitude: req.body.longitude ?? null,
+        latitude: req.body.latitude ?? null
+      };
 
-      if (existing) {
-        return res.status(409).json({
-          error: "A record with the same country and from_date already exists",
-          existing
-        });
-      }
-
-      // Crear nuevo registro
+      // Crear nuevo registro combinando obligatorios y opcionales
       const newRecord = {
         country,
         from_date: fromDateNum,
         to_date: toDateNum,
-        severity_km2: severityNum
+        severity_km2: severityNum,
+        ...optionalFields
       };
 
-      delete newRecord._id;
-
+      // Insertar en la base de datos
       db_PRA.insert(newRecord, (err, doc) => {
-        if (err) {
-          return res.status(500).json({ error: "Database error" });
-        }
-
+        if (err) return res.status(500).json({ error: "Database error" });
         return res.status(201).json({
           message: "Record created successfully",
           record: doc
         });
-
       });
-
     });
-
   });
 
   // -------- PUT --------------------------------

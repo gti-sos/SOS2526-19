@@ -11,15 +11,15 @@
     },
     {
       name: "Pablo Rodríguez Armesto",
-      resource: "droughts",
-      frontend: "",
-      api: `${BASE}/api/v1/droughts`,
-      docs: `${BASE}/api/v1/droughts/docs`
+      resource: "drought-stats",
+      frontend: `${BASE}/drought-stats`,
+      api: `${BASE}/api/v1/drought-stats`,
+      docs: `${BASE}/api/v1/drought-stats/docs`
     },
     {
-      name: "Javier",
+      name: "Javier Morales Jiménez",
       resource: "earthquakes",
-      frontend: "",
+      frontend: `${BASE}/earthquakes`,
       api: `${BASE}/api/v1/earthquakes`,
       docs: `${BASE}/api/v1/earthquakes/docs`
     }
