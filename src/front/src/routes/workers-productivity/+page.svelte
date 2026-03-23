@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { traducirErrorApi } from '$lib/apiMessages';
+  import { traducirErrorApi, traducirExitoApi } from '$lib/apiMessages';
 
   /**
    * @typedef {Object} WorkersProductivityRecord
@@ -32,6 +32,7 @@
 
   const API_BASE = '/api/v1/workers-productivity';
   const NOMBRE_RECURSO = 'registro de productividad laboral';
+  const NOMBRE_RECURSO_PLURAL = 'registros de productividad laboral';
 
   /** @type {WorkersProductivityRecord[]} */
   let registros = $state([]);
@@ -100,7 +101,7 @@
   }
 
   async function cargarRegistros() {
-    limpiarMensaje();
+    //limpiarMensaje();
     cargando = true;
 
     try {
@@ -152,7 +153,15 @@
         return;
       }
 
-      mostrarMensaje('El registro se ha creado correctamente.', 'exito');
+      mostrarMensaje(
+        traducirExitoApi('crear', {
+          recurso: NOMBRE_RECURSO,
+          country: payload.country,
+          year: payload.year
+        }),
+        'exito'
+      );
+
       resetFormulario();
       await cargarRegistros();
     } catch (error) {
@@ -182,7 +191,12 @@
       }
 
       registros = [];
-      mostrarMensaje('Todos los datos se han eliminado correctamente.', 'exito');
+      mostrarMensaje(
+        traducirExitoApi('eliminarTodos', {
+          recursoPlural: NOMBRE_RECURSO_PLURAL
+        }),
+        'exito'
+      );
     } catch (error) {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
     }
@@ -215,7 +229,15 @@
         return;
       }
 
-      mostrarMensaje(`El registro de ${country} en ${year} se ha eliminado correctamente.`, 'exito');
+      mostrarMensaje(
+        traducirExitoApi('eliminar', {
+          recurso: NOMBRE_RECURSO,
+          country,
+          year
+        }),
+        'exito'
+      );
+
       await cargarRegistros();
     } catch (error) {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');

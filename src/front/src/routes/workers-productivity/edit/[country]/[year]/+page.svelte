@@ -1,6 +1,6 @@
 <script>
   import { goto } from '$app/navigation';
-  import { traducirErrorApi } from '$lib/apiMessages';
+  import { traducirErrorApi, traducirExitoApi } from '$lib/apiMessages';
 
   let { data } = $props();
 
@@ -10,33 +10,33 @@
   let mensaje = $state('');
   let tipoMensaje = $state('');
 
-  let formulario = $state(
-    data.resource
-      ? {
-          country: data.resource.country ?? '',
-          year: data.resource.year ?? '',
-          productivity_hour: data.resource.productivity_hour ?? '',
-          avg_annual_hours: data.resource.avg_annual_hours ?? '',
-          gpd_per_capita: data.resource.gpd_per_capita ?? '',
-          human_capital: data.resource.human_capital ?? '',
-          capital_stock_worker: data.resource.capital_stock_worker ?? '',
-          employment: data.resource.employment ?? '',
-          household_consum: data.resource.household_consum ?? '',
-          investment_share: data.resource.investment_share ?? ''
-        }
-      : {
-          country: '',
-          year: '',
-          productivity_hour: '',
-          avg_annual_hours: '',
-          gpd_per_capita: '',
-          human_capital: '',
-          capital_stock_worker: '',
-          employment: '',
-          household_consum: '',
-          investment_share: ''
-        }
-  );
+  let formulario = $state({
+    country: '',
+    year: '',
+    productivity_hour: '',
+    avg_annual_hours: '',
+    gpd_per_capita: '',
+    human_capital: '',
+    capital_stock_worker: '',
+    employment: '',
+    household_consum: '',
+    investment_share: ''
+  });
+
+  $effect(() => {
+    if (data.resource) {
+      formulario.country = data.resource.country ?? '';
+      formulario.year = data.resource.year ?? '';
+      formulario.productivity_hour = data.resource.productivity_hour ?? '';
+      formulario.avg_annual_hours = data.resource.avg_annual_hours ?? '';
+      formulario.gpd_per_capita = data.resource.gpd_per_capita ?? '';
+      formulario.human_capital = data.resource.human_capital ?? '';
+      formulario.capital_stock_worker = data.resource.capital_stock_worker ?? '';
+      formulario.employment = data.resource.employment ?? '';
+      formulario.household_consum = data.resource.household_consum ?? '';
+      formulario.investment_share = data.resource.investment_share ?? '';
+    }
+  });
 
   async function guardarCambios() {
     mensaje = '';
@@ -77,7 +77,11 @@
         return;
       }
 
-      mensaje = 'Los cambios se han guardado correctamente.';
+      mensaje = traducirExitoApi('editar', {
+        recurso: NOMBRE_RECURSO,
+        country: payload.country,
+        year: payload.year
+      });
       tipoMensaje = 'exito';
 
       setTimeout(() => {
