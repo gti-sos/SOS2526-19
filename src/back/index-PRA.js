@@ -380,12 +380,26 @@ app.put(`${BASE_PRA}/:country/:from_date`, (req, res) => {
           });
         }
 
+      const optionalFields = {
+        description: req.body.description ?? null,
+        alert_level: req.body.alert_level ?? null,
+        alert_score: req.body.alert_score ?? null,
+        episode_alert_score: req.body.episode_alert_score ?? null,
+        iso: req.body.iso ?? null,
+        gdacs_id: req.body.gdacs_id ?? null,
+        duration_day: req.body.duration_day ?? null,
+        impact: req.body.impact ?? null,
+        longitude: req.body.longitude ?? null,
+        latitude: req.body.latitude ?? null
+      };
+
         // Actualizar el registro original
         const updatedRecord = {
           country,
           from_date: newFromDate,
           to_date: newToDate,
-          severity_km2: newSeverity
+          severity_km2: newSeverity,
+          ...optionalFields
         };
 
         db_PRA.update(
