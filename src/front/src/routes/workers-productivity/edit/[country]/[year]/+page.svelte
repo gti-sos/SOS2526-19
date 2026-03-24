@@ -86,7 +86,7 @@
 
       setTimeout(() => {
         goto('/workers-productivity');
-      }, 800);
+      }, 1800);
     } catch (error) {
       mensaje = 'No se ha podido conectar con la API.';
       tipoMensaje = 'error';
