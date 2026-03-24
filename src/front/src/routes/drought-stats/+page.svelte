@@ -128,13 +128,21 @@
   }
 
   async function cargarRegistros() {
-    //limpiarMensaje();
     cargando = true;
+    limpiarMensaje();
 
     try {
       const respuesta = await fetch(API_BASE);
 
-      if (!respuesta.ok) {
+      let data = [];
+
+      if (respuesta.status === 404) {
+        data = [];
+      } 
+      else if (respuesta.ok) {
+        data = await respuesta.json();
+      } 
+      else {
         mostrarMensaje(
           traducirErrorApiDrought(respuesta.status, {
             recurso: NOMBRE_RECURSO
@@ -145,7 +153,40 @@
         return;
       }
 
-      registros = /** @type {DroughtStatsRecord[]} */ await respuesta.json();
+      if (!data || data.length === 0) {
+        const respuestaInit = await fetch(`${API_BASE}/loadInitialData`);
+
+        if (!respuestaInit.ok) {
+          mostrarMensaje(
+            traducirErrorApiDrought(respuestaInit.status, {
+              recurso: NOMBRE_RECURSO
+            }),
+            'error'
+          );
+          registros = [];
+          return;
+        }
+
+        mostrarMensaje('Datos iniciales cargados correctamente.', 'exito');
+
+        const nuevaRespuesta = await fetch(API_BASE);
+
+        if (!nuevaRespuesta.ok) {
+          mostrarMensaje(
+            traducirErrorApiDrought(nuevaRespuesta.status, {
+              recurso: NOMBRE_RECURSO
+            }),
+            'error'
+          );
+          registros = [];
+          return;
+        }
+
+        data = await nuevaRespuesta.json();
+      }
+
+      registros = data;
+
     } catch (error) {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
       registros = [];
@@ -362,7 +403,7 @@
   <h2>Listado de registros</h2>
 
   <div class="acciones-superiores">
-    <button type="button" onclick={cargarRegistros}>Actualizar lista</button>
+    <button type="button" onclick={cargarRegistros}>Cargar registros</button>
     <button type="button" onclick={borrarTodos}>Borrar todos los datos</button>
   </div>
 

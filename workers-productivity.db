@@ -10,5 +10,3 @@
 {"id":5,"country":"Spain","year":1999,"productivity_hour":696.896,"avg_annual_hours":1758.4,"gpd_per_capita":30114.034,"human_capital":2.619,"capital_stock_worker":316934.242,"employment":15.89,"household_consum":926556.875,"investment_share":0.269,"key":"Spain-1999","_id":"sFTH5qaGZTOciR8Z"}
 {"$$indexCreated":{"fieldName":"key","unique":true,"sparse":false}}
 {"$$indexCreated":{"fieldName":"key","unique":true}}
-{"id":11,"country":"vdtg","year":897,"productivity_hour":879,"avg_annual_hours":985,"gpd_per_capita":5,"human_capital":5,"capital_stock_worker":561,"employment":6,"household_consum":1,"investment_share":1,"key":"vdtg-897","_id":"ayuhoh4okUVp7m09"}
-{"$$deleted":true,"_id":"ayuhoh4okUVp7m09"}
