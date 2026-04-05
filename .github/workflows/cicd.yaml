@@ -1,20 +1,16 @@
 name: CI_CD
-on: 
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
+on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      - name: Install dependencies      
-        run: npm ci
-      - name: Build UI      
-        run: npm run build
-      - name: Test
+      - name: Install dependencies
+        run: npm install
+      - name: Install build
+        run: npm run build-front
+      - name: test
         run: npm test
       - name: Run server for e2e tests
         run: npm start &
