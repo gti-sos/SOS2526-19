@@ -61,6 +61,7 @@
       severity_km2: Number(formulario.severity_km2),
       iso: formulario.iso.trim(),
       gdacs_id: formulario.gdacs_id.trim(),
+      duration_day: Number(formulario.duration_day),
       impact: formulario.impact.trim(),
       longitude: Number(formulario.longitude),
       latitude: Number(formulario.latitude)

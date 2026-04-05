@@ -40,9 +40,27 @@
    * @property {string|number} latitude
    */
 
+     /**
+   * @typedef {Object} DroughtStatsSearchForm
+   * @property {string} description
+   * @property {string} alert_level
+   * @property {string|number} alert_score
+   * @property {string|number} episode_alert_score
+   * @property {string} country
+   * @property {string|number} from_date
+   * @property {string|number} to_date
+   * @property {string|number} severity_km2
+   * @property {string} iso
+   * @property {string} gdacs_id
+   * @property {string|number} duration_day
+   * @property {string} impact
+   * @property {string|number} longitude
+   * @property {string|number} latitude
+   */
   
   const API_BASE = '/api/v1/drought-stats';
   const NOMBRE_RECURSO = 'registro de sequía';
+
 
   /** @type {DroughtStatsRecord[]} */
 
@@ -51,11 +69,31 @@
 
   let mensaje = $state('');
   let tipoMensaje = $state('');
+  let urlBusquedaActual = $state(API_BASE);
+  let ultimaBusquedaFueFiltrada = $state(false);
 
   /** @type {DroughtStatsForm} */
 
 
   let formulario = $state({
+    description: '',
+    alert_level: '',
+    alert_score: '',
+    episode_alert_score: '',
+    country: '',
+    from_date: '',
+    to_date: '',
+    severity_km2: '',
+    iso: '',
+    gdacs_id: '',
+    duration_day: '',
+    impact: '',
+    longitude: '',
+    latitude: ''
+  });
+
+  /** @type {DroughtStatsSearchForm} */
+  let filtros = $state({
     description: '',
     alert_level: '',
     alert_score: '',
@@ -104,6 +142,23 @@
     formulario.latitude = '';
   }
 
+  function resetFiltros() {
+    filtros.description = '';
+    filtros.alert_level = '';
+    filtros.alert_score = '';
+    filtros.episode_alert_score = '';
+    filtros.country = '';
+    filtros.from_date = '';
+    filtros.to_date = '';
+    filtros.severity_km2 = '';
+    filtros.iso = '';
+    filtros.gdacs_id = '';
+    filtros.duration_day = '';
+    filtros.impact = '';
+    filtros.longitude = '';
+    filtros.latitude = '';
+  }
+
   /**
    * @returns {DroughtStatsRecord}
    */
@@ -127,12 +182,250 @@
     };
   }
 
-  async function cargarRegistros() {
+  /**
+   * Convierte cualquier valor del formulario en texto seguro.
+   * Si está vacío, undefined, null o NaN, devuelve cadena vacía.
+   * @param {string|number|null|undefined} valor
+   * @returns {string}
+   */
+
+  function normalizarTextoFiltro(valor) {
+    if (valor === undefined || valor === null) return '';
+
+    if (typeof valor === 'number' && Number.isNaN(valor)) return '';
+
+    const texto = String(valor).trim();
+
+    if (texto === 'undefined' || texto === 'null' || texto === 'NaN') return '';
+
+    return texto;
+  }
+
+  /**
+   * @param {string|number|null|undefined} valor
+   * @returns {boolean}
+   */
+  function tieneValor(valor) {
+    return normalizarTextoFiltro(valor) !== '';
+  }
+
+  /**
+   * @param {string|number|null|undefined} valor
+   * @returns {number|null}
+   */
+  function convertirNumero(valor) {
+    const texto = normalizarTextoFiltro(valor);
+    if (!texto) return null;
+
+    const numero = Number(texto);
+    return Number.isNaN(numero) ? null : numero;
+  }
+
+  /**
+   * Devuelve una copia de los filtros con todos los valores vacíos normalizados.
+   * @param {DroughtStatsSearchForm} estadoFiltros
+   * @returns {DroughtStatsSearchForm}
+   */
+  function sanearFiltros(estadoFiltros) {
+    return {
+      description: normalizarTextoFiltro(estadoFiltros.description),
+      alert_level: normalizarTextoFiltro(estadoFiltros.alert_level),
+      alert_score: normalizarTextoFiltro(estadoFiltros.alert_score),
+      episode_alert_score: normalizarTextoFiltro(estadoFiltros.episode_alert_score),
+      country: normalizarTextoFiltro(estadoFiltros.country),
+      from_date: normalizarTextoFiltro(estadoFiltros.from_date),
+      to_date: normalizarTextoFiltro(estadoFiltros.to_date),
+      severity_km2: normalizarTextoFiltro(estadoFiltros.severity_km2),
+      iso: normalizarTextoFiltro(estadoFiltros.iso),
+      gdacs_id: normalizarTextoFiltro(estadoFiltros.gdacs_id),
+      duration_day: normalizarTextoFiltro(estadoFiltros.duration_day),
+      impact: normalizarTextoFiltro(estadoFiltros.impact),
+      longitude: normalizarTextoFiltro(estadoFiltros.longitude),
+      latitude: normalizarTextoFiltro(estadoFiltros.latitude)
+
+    };
+  }
+
+  /**
+   * @param {DroughtStatsSearchForm} estadoFiltros
+   * @returns {string}
+   */
+  function construirMotivoSinResultados(estadoFiltros) {
+    const country = normalizarTextoFiltro(estadoFiltros.country);
+    const from_date = normalizarTextoFiltro(estadoFiltros.from_date);
+    const to_date = normalizarTextoFiltro(estadoFiltros.to_date);
+
+    if (country && from_date && to_date) {
+      return `No existen registros para el país "${country}" entre los años ${from_date} y ${to_date}.`;
+    }
+
+    if (country && from_date) {
+      return `No existen registros para el país "${country}" desde el año ${from_date}.`;
+    }
+
+    if (country && to_date) {
+      return `No existen registros para el país "${country}" hasta el año ${to_date}.`;
+    }
+
+    if (country) {
+      return `No existen registros para el país "${country}" con los filtros indicados.`;
+    }
+
+    if (from_date && to_date) {
+      return `No existen registros entre los años ${from_date} y ${to_date}.`;
+    }
+
+    if (from_date) {
+      return `No existen registros desde el año ${from_date}.`;
+    }
+
+    if (to_date) {
+      return `No existen registros hasta el año ${to_date}.`;
+    }
+
+
+    const filtrosAplicados = [];
+
+    if (tieneValor(estadoFiltros.description)) filtrosAplicados.push(`description=${normalizarTextoFiltro(estadoFiltros.description)}`);
+    if (tieneValor(estadoFiltros.alert_level)) filtrosAplicados.push(`alert_level=${normalizarTextoFiltro(estadoFiltros.alert_level)}`);
+    if (tieneValor(estadoFiltros.alert_score)) filtrosAplicados.push(`alert_score=${normalizarTextoFiltro(estadoFiltros.alert_score)}`);
+    if (tieneValor(estadoFiltros.episode_alert_score)) filtrosAplicados.push(`episode_alert_score=${normalizarTextoFiltro(estadoFiltros.episode_alert_score)}`);
+    if (tieneValor(estadoFiltros.severity_km2)) filtrosAplicados.push(`severity_km2=${normalizarTextoFiltro(estadoFiltros.severity_km2)}`);
+    if (tieneValor(estadoFiltros.iso)) filtrosAplicados.push(`iso=${normalizarTextoFiltro(estadoFiltros.iso)}`);
+    if (tieneValor(estadoFiltros.gdacs_id)) filtrosAplicados.push(`gdacs_id=${normalizarTextoFiltro(estadoFiltros.gdacs_id)}`);
+    if (tieneValor(estadoFiltros.duration_day)) filtrosAplicados.push(`duration_day=${normalizarTextoFiltro(estadoFiltros.duration_day)}`);
+    if (tieneValor(estadoFiltros.impact)) filtrosAplicados.push(`impact=${normalizarTextoFiltro(estadoFiltros.impact)}`);
+    if (tieneValor(estadoFiltros.longitude)) filtrosAplicados.push(`longitude=${normalizarTextoFiltro(estadoFiltros.longitude)}`);
+    if (tieneValor(estadoFiltros.latitude)) filtrosAplicados.push(`latitude=${normalizarTextoFiltro(estadoFiltros.latitude)}`);
+
+
+    if (filtrosAplicados.length > 0) {
+      return `No existen registros que cumplan estos filtros: ${filtrosAplicados.join(', ')}.`;
+    }
+
+    return 'No se han encontrado registros con la búsqueda realizada.';
+  }
+
+  /**
+   * @param {DroughtStatsSearchForm} estadoFiltros
+   * @returns {{ok:false,mensaje:string} | {ok:true,url:string,endpoint:string}}
+   */
+  function construirBusqueda(estadoFiltros) {
+    const country = normalizarTextoFiltro(estadoFiltros.country);
+    const from_date = normalizarTextoFiltro(estadoFiltros.from_date);
+    const to_date = normalizarTextoFiltro(estadoFiltros.to_date);
+
+    const from_dateNum = convertirNumero(estadoFiltros.from_date);
+    const to_dateNum = convertirNumero(estadoFiltros.to_date);
+
+    if (from_date && to_date && from_dateNum !== null && to_dateNum !== null && from_dateNum > to_dateNum) {
+      return {
+        ok: false,
+        mensaje: `El rango de años no es válido: "Año desde" (${from_date}) no puede ser mayor que "Año hasta" (${to_date}).`
+      };
+    }
+
+    let endpoint = API_BASE;
+    const params = new URLSearchParams();
+/*
+    if (country && from_date) {
+      endpoint = `${API_BASE}/${encodeURIComponent(country)}/${encodeURIComponent(from_date)}`;
+    } else if (country) {
+      endpoint = `${API_BASE}/${encodeURIComponent(country)}`;
+    }
+*/
+    const queryMap = {
+      description: estadoFiltros.description,
+      alert_level: estadoFiltros.alert_level,
+      alert_score: estadoFiltros.alert_score,
+      episode_alert_score: estadoFiltros.episode_alert_score,
+      country: estadoFiltros.country,
+      from_date: estadoFiltros.from_date,
+      to_date: estadoFiltros.to_date,
+      severity_km2: estadoFiltros.severity_km2,
+      iso: estadoFiltros.iso,
+      gdacs_id: estadoFiltros.gdacs_id,
+      duration_day: estadoFiltros.duration_day,
+      impact: estadoFiltros.impact,
+      longitude: estadoFiltros.longitude,
+      latitude: estadoFiltros.latitude
+    };
+
+    for (const [clave, valor] of Object.entries(queryMap)) {
+      const texto = normalizarTextoFiltro(valor);
+      if (texto) {
+        params.set(clave, texto);
+      }
+    }
+
+    const url = params.toString() ? `${endpoint}?${params.toString()}` : endpoint;
+
+    return { ok: true, url, endpoint };
+  }
+
+  /**
+   * @param {Response} respuesta
+   * @returns {Promise<string|null>}
+   */
+  async function extraerMensajeErrorBackend(respuesta) {
+    try {
+      const contenido = await respuesta.clone().json();
+
+      if (typeof contenido === 'string' && contenido.trim()) {
+        return contenido;
+      }
+
+      if (contenido?.error && typeof contenido.error === 'string') {
+        return contenido.error;
+      }
+
+      if (contenido?.message && typeof contenido.message === 'string') {
+        return contenido.message;
+      }
+
+      if (contenido?.mensaje && typeof contenido.mensaje === 'string') {
+        return contenido.mensaje;
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * @param {DroughtStatsSearchForm} estadoFiltros
+   * @returns {string}
+   */
+  function obtenerContextoBusqueda(estadoFiltros) {
+    const partes = [];
+
+    if (tieneValor(estadoFiltros.country)) partes.push(`país="${normalizarTextoFiltro(estadoFiltros.country)}"`);
+    if (tieneValor(estadoFiltros.from_date) && tieneValor(estadoFiltros.to_date)) {
+      partes.push(`rango=${normalizarTextoFiltro(estadoFiltros.from_date)}-${normalizarTextoFiltro(estadoFiltros.to_date)}`);
+    } else if (tieneValor(estadoFiltros.from_date)) {
+      partes.push(`desde=${normalizarTextoFiltro(estadoFiltros.from_date)}`);
+    } else if (tieneValor(estadoFiltros.to_date)) {
+      partes.push(`hasta=${normalizarTextoFiltro(estadoFiltros.to_date)}`);
+    }
+    return partes.length > 0 ? `Filtros usados: ${partes.join(', ')}.` : '';
+  }
+
+  /**
+   * @param {string} url
+   * @param {boolean} [esBusquedaFiltrada=false]
+   * @param {DroughtStatsSearchForm|null} [filtrosBusqueda=null]
+   */
+
+  async function cargarRegistros(url = API_BASE, esBusquedaFiltrada = false, filtrosBusqueda = null) {
     cargando = true;
-    limpiarMensaje();
+    urlBusquedaActual = url;
+    ultimaBusquedaFueFiltrada = esBusquedaFiltrada;
+    //limpiarMensaje();
 
     try {
-      const respuesta = await fetch(API_BASE);
+      /*
+      const respuesta = await fetch(url);
 
       let data = [];
 
@@ -186,6 +479,37 @@
       }
 
       registros = data;
+*/
+
+      const respuesta = await fetch(url);
+
+      if (!respuesta.ok) {
+        const mensajeBackend = await extraerMensajeErrorBackend(respuesta);
+        const filtrosActivos = filtrosBusqueda || filtros;
+
+        mostrarMensaje(
+          mensajeBackend ||
+            traducirErrorApiDrought(respuesta.status, {
+              recurso: NOMBRE_RECURSO,
+              country: normalizarTextoFiltro(filtrosActivos.country),
+              from_date: normalizarTextoFiltro(filtrosActivos.from_date)
+            }),
+          'error'
+        );
+
+        registros = [];
+        return;
+      }
+
+      const datos = await respuesta.json();
+      registros = Array.isArray(datos) ? datos : [datos];
+
+      if (esBusquedaFiltrada && registros.length === 0) {
+        const filtrosActivos = filtrosBusqueda || filtros;
+        const motivo = construirMotivoSinResultados(filtrosActivos);
+        const contexto = obtenerContextoBusqueda(filtrosActivos);
+        mostrarMensaje(`${motivo}${contexto ? ` ${contexto}` : ''}`, 'error');
+      }
 
     } catch (error) {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
@@ -194,6 +518,46 @@
       cargando = false;
     }
   }
+
+  async function buscarRegistros() {
+    limpiarMensaje();
+
+    const filtrosSaneados = sanearFiltros(filtros);
+
+    filtros.description = filtrosSaneados.description;
+    filtros.alert_level = filtrosSaneados.alert_level;
+    filtros.alert_score = filtrosSaneados.alert_score;
+    filtros.episode_alert_score = filtrosSaneados.episode_alert_score;
+    filtros.country = filtrosSaneados.country;
+    filtros.from_date = filtrosSaneados.from_date;
+    filtros.to_date = filtrosSaneados.to_date;
+    filtros.severity_km2 = filtrosSaneados.severity_km2;
+    filtros.iso = filtrosSaneados.iso;
+    filtros.gdacs_id = filtrosSaneados.gdacs_id;
+    filtros.duration_day = filtrosSaneados.duration_day;
+    filtros.impact = filtrosSaneados.impact;
+    filtros.longitude = filtrosSaneados.longitude;
+    filtros.latitude = filtrosSaneados.latitude;
+
+
+    const busqueda = construirBusqueda(filtrosSaneados);
+
+    if (!busqueda.ok) {
+      mostrarMensaje(busqueda.mensaje || 'No se ha podido realizar la búsqueda.', 'error');
+      return;
+    }
+
+    await cargarRegistros(busqueda.url, true, filtrosSaneados);
+  }
+
+  async function limpiarBusquedaYCargarTodo() {
+    limpiarMensaje();
+    resetFiltros();
+    await cargarRegistros(API_BASE, false);
+  }
+
+
+
 
   async function crearRegistro() {
     limpiarMensaje();
@@ -210,7 +574,10 @@
       });
 
       if (!respuesta.ok) {
+        const mensajeBackend = await extraerMensajeErrorBackend(respuesta);
+
         mostrarMensaje(
+          mensajeBackend ||
           traducirErrorApiDrought(respuesta.status, {
             recurso: NOMBRE_RECURSO,
             country: payload.country,
@@ -241,7 +608,10 @@
       });
 
       if (!respuesta.ok) {
+        const mensajeBackend = await extraerMensajeErrorBackend(respuesta);
+
         mostrarMensaje(
+          mensajeBackend ||
           traducirErrorApiDrought(respuesta.status, {
             recurso: NOMBRE_RECURSO
           }),
@@ -274,7 +644,10 @@
       });
 
       if (!respuesta.ok) {
+        const mensajeBackend = await extraerMensajeErrorBackend(respuesta);
+
         mostrarMensaje(
+          mensajeBackend ||
           traducirErrorApiDrought(respuesta.status, {
             recurso: NOMBRE_RECURSO,
             country,
@@ -400,12 +773,108 @@
 </section>
 
 <section class="bloque">
+  <h2>Búsqueda y filtros</h2>
+  <p>
+    Si los filtros no son válidos o no coinciden con ningún registro, se mostrará un mensaje
+    explicando la razón.
+  </p>
+
+  <form
+    onsubmit={(event) => {
+      event.preventDefault();
+      buscarRegistros();
+    }}
+    class="formulario"
+  >
+
+    <label>
+      Descripción
+      <input bind:value={filtros.description} type="text"/>
+    </label>
+
+    <label>
+      Nivel de alerta
+      <input bind:value={filtros.alert_level} type="text" />
+    </label>
+
+    <label>
+      Puntuación de alerta
+      <input bind:value={filtros.alert_score} type="text" inputmode="numeric" />
+    </label>
+
+    <label>
+      Episodio puntuación de alerta
+      <input bind:value={filtros.episode_alert_score} type="text" inputmode="numeric" />
+    </label>
+
+    <label>
+      País
+      <input bind:value={filtros.country} type="text" />
+    </label>
+
+    <label>
+      Año de origen
+      <input bind:value={filtros.from_date} type="text" inputmode="numeric" />
+    </label>
+
+    <label>
+      Año de finalización
+      <input bind:value={filtros.to_date} type="text" inputmode="numeric" />
+    </label>
+
+    <label>
+      Severidad en kilómetros cuadrados
+      <input bind:value={filtros.severity_km2} type="text" inputmode="numeric" />
+    </label>
+
+    <label>
+      ISO
+      <input bind:value={filtros.iso} type="text" />
+    </label>
+
+    <label>
+      GDACS_ID
+      <input bind:value={filtros.gdacs_id} type="text" />
+    </label>
+
+    <label>
+      Días de duración
+      <input bind:value={filtros.duration_day} type="text" inputmode="numeric" />
+    </label>
+
+    <label>
+      Impacto
+      <input bind:value={filtros.impact} type="text" />
+    </label>
+
+    <label>
+      Longitud
+      <input bind:value={filtros.longitude} type="text" inputmode="decimal"/>
+    </label>
+
+    <label>
+      Latitud
+      <input bind:value={filtros.latitude} type="text" inputmode="decimal"/>
+    </label>
+
+    <div class="acciones-formulario">
+      <button type="submit">Buscar</button>
+      <button type="button" onclick={limpiarBusquedaYCargarTodo}>Quitar filtros</button>
+    </div>
+  </form>
+</section>
+
+<section class="bloque">
   <h2>Listado de registros</h2>
 
   <div class="acciones-superiores">
-    <button type="button" onclick={cargarRegistros}>Cargar registros</button>
+    <button type="button" onclick={() => cargarRegistros(urlBusquedaActual, ultimaBusquedaFueFiltrada)}>Cargar registros</button>
     <button type="button" onclick={borrarTodos}>Borrar todos los datos</button>
   </div>
+
+  <p class="url-actual">
+    <strong>Consulta actual:</strong> <code>{urlBusquedaActual}</code>
+  </p>
 
   {#if cargando}
     <p>Cargando datos...</p>
@@ -474,7 +943,8 @@
     font-family: Arial, sans-serif;
   }
 
-  h1, h2 {
+  h1,
+  h2 {
     margin-bottom: 0.6rem;
   }
 
@@ -530,6 +1000,11 @@
 
   .tabla-contenedor {
     overflow-x: auto;
+  }
+
+  .url-actual {
+    margin: 1rem 0 0.25rem;
+    word-break: break-word;
   }
 
   table {
