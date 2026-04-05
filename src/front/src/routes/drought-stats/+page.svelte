@@ -483,7 +483,15 @@
 
       const respuesta = await fetch(url);
 
-      if (!respuesta.ok) {
+      let datos = [];
+
+      if (respuesta.status === 404) {
+        datos = [];
+      } 
+      else if (respuesta.ok) {
+        datos = await respuesta.json();
+      } 
+      else {
         const mensajeBackend = await extraerMensajeErrorBackend(respuesta);
         const filtrosActivos = filtrosBusqueda || filtros;
 
@@ -501,8 +509,42 @@
         return;
       }
 
-      const datos = await respuesta.json();
       registros = Array.isArray(datos) ? datos : [datos];
+
+
+      if (registros.length === 0 && !esBusquedaFiltrada) {
+        const respuestaInit = await fetch(`${API_BASE}/loadInitialData`);
+
+        if (!respuestaInit.ok) {
+          mostrarMensaje(
+            traducirErrorApiDrought(respuestaInit.status, {
+              recurso: NOMBRE_RECURSO
+            }),
+            'error'
+          );
+          registros = [];
+          return;
+        }
+
+        mostrarMensaje('Datos iniciales cargados correctamente.', 'exito');
+
+        const nuevaRespuesta = await fetch(API_BASE);
+
+        if (!nuevaRespuesta.ok) {
+          mostrarMensaje(
+            traducirErrorApiDrought(nuevaRespuesta.status, {
+              recurso: NOMBRE_RECURSO
+            }),
+            'error'
+          );
+          registros = [];
+          return;
+        }
+
+        const nuevosDatos = await nuevaRespuesta.json();
+        registros = Array.isArray(nuevosDatos) ? nuevosDatos : [nuevosDatos];
+      }
+
 
       if (esBusquedaFiltrada && registros.length === 0) {
         const filtrosActivos = filtrosBusqueda || filtros;
@@ -510,7 +552,6 @@
         const contexto = obtenerContextoBusqueda(filtrosActivos);
         mostrarMensaje(`${motivo}${contexto ? ` ${contexto}` : ''}`, 'error');
       }
-
     } catch (error) {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
       registros = [];
@@ -697,72 +738,72 @@
   >
     <label>
       Descripción
-      <input bind:value={formulario.description} />
+      <input bind:value={formulario.description} data-testid="description"/>
     </label>
 
     <label>
       Nivel de alerta
-      <input bind:value={formulario.alert_level} />
+      <input bind:value={formulario.alert_level} data-testid="alert_level"/>
     </label>
 
     <label>
       Puntuación de alerta
-      <input bind:value={formulario.alert_score} type="number" step="any" />
+      <input bind:value={formulario.alert_score} type="number" step="any" data-testid="alert_score"/>
     </label>
 
     <label>
       Episodio puntuación de alerta
-      <input bind:value={formulario.episode_alert_score} type="number" step="any" />
+      <input bind:value={formulario.episode_alert_score} type="number" step="any" data-testid="episode_alert_score"/>
     </label>
 
     <label>
       País
-      <input bind:value={formulario.country} step="any" required />
+      <input bind:value={formulario.country} step="any" required data-testid="country"/>
     </label>
 
     <label>
       Año de origen
-      <input bind:value={formulario.from_date} type="number" step="any" required />
+      <input bind:value={formulario.from_date} type="number" step="any" required data-testid="from_date"/>
     </label>
 
     <label>
       Año de finalización
-      <input bind:value={formulario.to_date} type="number" step="any" required />
+      <input bind:value={formulario.to_date} type="number" step="any" required data-testid="to_date"/>
     </label>
 
     <label>
       Severidad en kilómetros cuadrados
-      <input bind:value={formulario.severity_km2} type="number" step="any" required />
+      <input bind:value={formulario.severity_km2} type="number" step="any" required data-testid="severity_km2"/>
     </label>
 
     <label>
       ISO
-      <input bind:value={formulario.iso} step="any" />
+      <input bind:value={formulario.iso} step="any" data-testid="iso"/>
     </label>
 
     <label>
       GDACS_ID
-      <input bind:value={formulario.gdacs_id} step="any" />
+      <input bind:value={formulario.gdacs_id} step="any" data-testid="gdacs_id"/>
     </label>
 
     <label>
       Días de duración
-      <input bind:value={formulario.duration_day} type="number" step="any" />
+      <input bind:value={formulario.duration_day} type="number" step="any" data-testid="duration_day"/>
     </label>
 
     <label>
       Impacto
-      <input bind:value={formulario.impact} step="any" />
+      <input bind:value={formulario.impact} step="any" data-testid="impact"/>
     </label>
 
     <label>
       Longitud
-      <input bind:value={formulario.longitude} type="number" step="any" />
+      <input bind:value={formulario.longitude} type="number" step="any" data-testid="longitude"/>
     </label>
 
     <label>
       Latitud
-      <input bind:value={formulario.latitude} type="number" step="any" />
+      <input bind:value={formulario.latitude} type="number" step="any" data-testid="latitude"/>
     </label>
 
     <div class="acciones-formulario">
@@ -789,72 +830,72 @@
 
     <label>
       Descripción
-      <input bind:value={filtros.description} type="text"/>
+      <input bind:value={filtros.description} type="text" data-testid="filter-description"/>
     </label>
 
     <label>
       Nivel de alerta
-      <input bind:value={filtros.alert_level} type="text" />
+      <input bind:value={filtros.alert_level} type="text" data-testid="filter-alert_level"/>
     </label>
 
     <label>
       Puntuación de alerta
-      <input bind:value={filtros.alert_score} type="text" inputmode="numeric" />
+      <input bind:value={filtros.alert_score} type="text" inputmode="numeric" data-testid="filter-alert_score"/>
     </label>
 
     <label>
       Episodio puntuación de alerta
-      <input bind:value={filtros.episode_alert_score} type="text" inputmode="numeric" />
+      <input bind:value={filtros.episode_alert_score} type="text" inputmode="numeric" data-testid="filter-episode_alert_score"/>
     </label>
 
     <label>
       País
-      <input bind:value={filtros.country} type="text" />
+      <input bind:value={filtros.country} type="text" data-testid="filter-country"/>
     </label>
 
     <label>
       Año de origen
-      <input bind:value={filtros.from_date} type="text" inputmode="numeric" />
+      <input bind:value={filtros.from_date} type="text" inputmode="numeric" data-testid="filter-from_date"/>
     </label>
 
     <label>
       Año de finalización
-      <input bind:value={filtros.to_date} type="text" inputmode="numeric" />
+      <input bind:value={filtros.to_date} type="text" inputmode="numeric" data-testid="filter-to_date"/>
     </label>
 
     <label>
       Severidad en kilómetros cuadrados
-      <input bind:value={filtros.severity_km2} type="text" inputmode="numeric" />
+      <input bind:value={filtros.severity_km2} type="text" inputmode="numeric" data-testid="filter-severity_km2"/>
     </label>
 
     <label>
       ISO
-      <input bind:value={filtros.iso} type="text" />
+      <input bind:value={filtros.iso} type="text" data-testid="filter-iso"/>
     </label>
 
     <label>
       GDACS_ID
-      <input bind:value={filtros.gdacs_id} type="text" />
+      <input bind:value={filtros.gdacs_id} type="text" data-testid="filter-gdacs_id"/>
     </label>
 
     <label>
       Días de duración
-      <input bind:value={filtros.duration_day} type="text" inputmode="numeric" />
+      <input bind:value={filtros.duration_day} type="text" inputmode="numeric" data-testid="filter-duration_day"/>
     </label>
 
     <label>
       Impacto
-      <input bind:value={filtros.impact} type="text" />
+      <input bind:value={filtros.impact} type="text" data-testid="filter-impact"/>
     </label>
 
     <label>
       Longitud
-      <input bind:value={filtros.longitude} type="text" inputmode="decimal"/>
+      <input bind:value={filtros.longitude} type="text" inputmode="decimal" data-testid="filter-longitude"/>
     </label>
 
     <label>
       Latitud
-      <input bind:value={filtros.latitude} type="text" inputmode="decimal"/>
+      <input bind:value={filtros.latitude} type="text" inputmode="decimal" data-testid="filter-latitude"/>
     </label>
 
     <div class="acciones-formulario">

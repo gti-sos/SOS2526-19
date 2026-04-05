@@ -140,72 +140,72 @@
   >
     <label>
       Descripción
-      <input bind:value={formulario.description} />
+      <input bind:value={formulario.description} data-testid="description"/>
     </label>
 
     <label>
       Nivel de alerta
-      <input bind:value={formulario.alert_level} />
+      <input bind:value={formulario.alert_level} data-testid="alert_level"/>
     </label>
 
     <label>
       Puntuación de alerta
-      <input bind:value={formulario.alert_score} type="number" step="any" />
+      <input bind:value={formulario.alert_score} type="number" step="any" data-testid="alert_score"/>
     </label>
 
     <label>
       Episodio puntuación de alerta
-      <input bind:value={formulario.episode_alert_score} type="number" step="any" />
+      <input bind:value={formulario.episode_alert_score} type="number" step="any" data-testid="episode_alert_score"/>
     </label>
 
     <label>
       País
-      <input bind:value={formulario.country} step="any" required />
+      <input bind:value={formulario.country} step="any" required data-testid="country"/>
     </label>
 
     <label>
       Año de origen
-      <input bind:value={formulario.from_date} type="number" step="any" required />
+      <input bind:value={formulario.from_date} type="number" step="any" required data-testid="from_date"/>
     </label>
 
     <label>
       Año de finalización
-      <input bind:value={formulario.to_date} type="number" step="any" required />
+      <input bind:value={formulario.to_date} type="number" step="any" required data-testid="to_date"/>
     </label>
 
     <label>
       Severidad en kilómetros cuadrados
-      <input bind:value={formulario.severity_km2} type="number" step="any" required />
+      <input bind:value={formulario.severity_km2} type="number" step="any" required data-testid="severity_km2"/>
     </label>
 
     <label>
       ISO
-      <input bind:value={formulario.iso} step="any" />
+      <input bind:value={formulario.iso} step="any" data-testid="iso"/>
     </label>
 
     <label>
       GDACS_ID
-      <input bind:value={formulario.gdacs_id} step="any" />
+      <input bind:value={formulario.gdacs_id} step="any" data-testid="gdacs_id"/>
     </label>
 
     <label>
       Días de duración
-      <input bind:value={formulario.duration_day} type="number" step="any" />
+      <input bind:value={formulario.duration_day} type="number" step="any" data-testid="duration_day"/>
     </label>
 
     <label>
       Impacto
-      <input bind:value={formulario.impact} step="any" />
+      <input bind:value={formulario.impact} step="any" data-testid="impact"/>
     </label>
 
     <label>
       Longitud
-      <input bind:value={formulario.longitude} type="number" step="any" />
+      <input bind:value={formulario.longitude} type="number" step="any" data-testid="longitude"/>
     </label>
 
     <label>
       Latitud
-      <input bind:value={formulario.latitude} type="number" step="any" />
+      <input bind:value={formulario.latitude} type="number" step="any" data-testid="latitude"/>
     </label>
 
     <div class="acciones-formulario">
