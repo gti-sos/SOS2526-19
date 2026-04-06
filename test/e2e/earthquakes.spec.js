@@ -17,7 +17,7 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
 
   // ---------- CREAR ----------
   await page.getByLabel('País').first().fill(country);
-  await page.getByLabel('Fecha de inicio').fill(fromdate);
+  await page.getByLabel('Fecha de inicio').first().fill(fromdate);
   await page.getByLabel('Severidad (escala Richter)').fill('6.5');
 
   await page.getByRole('button', { name: 'Registrar terremoto' }).click();

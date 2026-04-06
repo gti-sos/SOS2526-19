@@ -8,4 +8,5 @@
 {"id":4,"country":"Spain","year":1998,"productivity_hour":669.862,"avg_annual_hours":1752.44,"gpd_per_capita":29000.335,"human_capital":2.602,"capital_stock_worker":329083.85,"employment":15.184,"household_consum":882910.813,"investment_share":0.259,"key":"Spain-1998","_id":"UYtpap95mBpkTO5D"}
 {"id":3,"country":"Spain","year":1997,"productivity_hour":631.278,"avg_annual_hours":1743.21,"gpd_per_capita":27086.133,"human_capital":2.585,"capital_stock_worker":341476.716,"employment":14.537,"household_consum":815878.75,"investment_share":0.257,"key":"Spain-1997","_id":"zDJnbLDwabcipIyS"}
 {"id":9,"country":"Cambodia","year":1998,"productivity_hour":654.953,"avg_annual_hours":2158.5,"gpd_per_capita":1160.781,"human_capital":1.518,"capital_stock_worker":6603.859,"employment":4.846,"household_consum":13797.22,"investment_share":0.14,"key":"Cambodia-1998","_id":"zXc1v8XHR3LEzpAr"}
-{"id":10,"country":"Cambodia","year":1999,"productivity_hour":718.37,"avg_annual_hours":2183.7,"gpd_per_capita":1315.181,"human_capital":1.529,"capital_stock_worker":6814.495,"employment":5.101,"household_consum":14829.981,"investment_share":0.209,"key":"Cambodia-1999","_id":"FUNLUZLBqVyt3D3M"}
+{"$$indexCreated":{"fieldName":"key","unique":true,"sparse":false}}
+{"$$indexCreated":{"fieldName":"key","unique":true}}
