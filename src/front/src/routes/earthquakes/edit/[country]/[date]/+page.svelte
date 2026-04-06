@@ -108,9 +108,7 @@
       const nuevoCountry = formulario.country;
       const nuevaDate = formulario.fromdate;
       if (nuevoCountry !== country || nuevaDate !== date) {
-        setTimeout(() => {
-          goto(`/earthquakes/`);
-        }, 1500);
+        goto(`/earthquakes`);
       }
     } catch {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
