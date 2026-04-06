@@ -52,7 +52,7 @@
 
     try {
       const respuesta = await fetch(
-        `${API_BASE}/${encodeURIComponent(data.country)}/${encodeURIComponent(data.date)}`,
+        `${API_BASE}/${encodeURIComponent(data.country)}/${encodeURIComponent(data.fromdate)}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
