@@ -94,13 +94,13 @@
 </p>
 
 <h1>Editar terremoto</h1>
-<p>Estás editando el terremoto de <strong>{data.country}</strong> con fecha <strong>{data.date}</strong>.</p>
+<p>Estás editando el terremoto de <strong>{data.country}</strong> con fecha <strong>{data.fromdate}</strong>.</p>
 
 {#if data.error || !data.resource}
   <div class="mensaje error">
     {traducirErrorApiEarthquake(data.error ?? 404, {
       country: data.country,
-      fromdate: data.date
+      fromdate: data.fromdate
     })}
   </div>
 {:else}
