@@ -109,7 +109,7 @@
       const nuevaDate = formulario.fromdate;
       if (nuevoCountry !== country || nuevaDate !== date) {
         setTimeout(() => {
-          goto(`/earthquakes/${encodeURIComponent(nuevoCountry)}/${encodeURIComponent(nuevaDate)}`);
+          goto(`/earthquakes/`);
         }, 1500);
       }
     } catch {
