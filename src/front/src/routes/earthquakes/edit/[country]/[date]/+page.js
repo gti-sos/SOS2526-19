@@ -1,6 +1,7 @@
-/** @type {import('./$types').PageLoad} */
+/** @type {import('@sveltejs/kit').Load} */
 export async function load({ params, fetch }) {
-  const { country, date } = params;
+  const country = params.country ?? '';
+  const date = params.date ?? '';
   const API_BASE = '/api/v1/earthquakes';
 
   try {
@@ -9,29 +10,14 @@ export async function load({ params, fetch }) {
     );
 
     if (!respuesta.ok) {
-      return {
-        country,
-        date,
-        resource: null,
-        error: respuesta.status
-      };
+      return { country, date, resource: null, error: respuesta.status };
     }
 
     const data = await respuesta.json();
     const resource = Array.isArray(data) ? data[0] : data;
 
-    return {
-      country,
-      date,
-      resource,
-      error: null
-    };
+    return { country, date, resource, error: null };
   } catch {
-    return {
-      country,
-      date,
-      resource: null,
-      error: 500
-    };
+    return { country, date, resource: null, error: 500 };
   }
 }
