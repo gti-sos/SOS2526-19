@@ -1,18 +1,14 @@
 <script>
-  import { onMount } from 'svelte';
-  import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { traducirErrorApiEarthquake } from '$lib/apiMessagesEarthquakes';
+  import { traducirErrorApiEarthquake } from '$lib/apiMessagesEarthquakes.js';
+
+  let { data } = $props();
 
   const API_BASE = '/api/v1/earthquakes';
 
-  const country = $derived($page.params.country);
-  const date = $derived($page.params.date);
-
-  let cargando = $state(true);
-  let guardando = $state(false);
   let mensaje = $state('');
   let tipoMensaje = $state('');
+  let guardando = $state(false);
 
   let formulario = $state({
     country: '',
@@ -24,48 +20,21 @@
     exposed_population: ''
   });
 
-  function mostrarMensaje(texto, tipo = 'exito') {
-    mensaje = texto;
-    tipoMensaje = tipo;
-  }
-
-  function limpiarMensaje() {
-    mensaje = '';
-    tipoMensaje = '';
-  }
-
-  onMount(async () => {
-    try {
-      const respuesta = await fetch(
-        `${API_BASE}/${encodeURIComponent(country)}/${encodeURIComponent(date)}`
-      );
-
-      if (!respuesta.ok) {
-        mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, { country, fromdate: date }),
-          'error'
-        );
-        cargando = false;
-        return;
-      }
-
-      const datos = await respuesta.json();
-      formulario.country = datos.country ?? '';
-      formulario.fromdate = datos.fromdate ?? '';
-      formulario.todate = datos.todate ?? '';
-      formulario.severity = datos.severity ?? '';
-      formulario.alertlevel = datos.alertlevel ?? '';
-      formulario.depth = datos.depth ?? '';
-      formulario.exposed_population = datos.exposed_population ?? '';
-    } catch {
-      mostrarMensaje('No se ha podido conectar con la API.', 'error');
-    } finally {
-      cargando = false;
+  $effect(() => {
+    if (data.resource) {
+      formulario.country = data.resource.country ?? '';
+      formulario.fromdate = data.resource.fromdate ?? '';
+      formulario.todate = data.resource.todate ?? '';
+      formulario.severity = data.resource.severity ?? '';
+      formulario.alertlevel = data.resource.alertlevel ?? '';
+      formulario.depth = data.resource.depth ?? '';
+      formulario.exposed_population = data.resource.exposed_population ?? '';
     }
   });
 
   async function guardarCambios() {
-    limpiarMensaje();
+    mensaje = '';
+    tipoMensaje = '';
     guardando = true;
 
     /** @type {any} */
@@ -83,7 +52,7 @@
 
     try {
       const respuesta = await fetch(
-        `${API_BASE}/${encodeURIComponent(country)}/${encodeURIComponent(date)}`,
+        `${API_BASE}/${encodeURIComponent(data.country)}/${encodeURIComponent(data.date)}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -92,28 +61,24 @@
       );
 
       if (!respuesta.ok) {
-        mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, {
-            country: formulario.country,
-            fromdate: formulario.fromdate
-          }),
-          'error'
-        );
+        mensaje = traducirErrorApiEarthquake(respuesta.status, {
+          country: payload.country,
+          fromdate: payload.fromdate
+        });
+        tipoMensaje = 'error';
+        guardando = false;
         return;
       }
 
-      mostrarMensaje('Los cambios se han guardado correctamente.', 'exito');
+      mensaje = 'Los cambios se han guardado correctamente.';
+      tipoMensaje = 'exito';
 
-      // Si cambiaron los identificadores, redirigir a la nueva ruta tras 1.5s
-      const nuevoCountry = formulario.country;
-      const nuevaDate = formulario.fromdate;
-      if (nuevoCountry !== country || nuevaDate !== date) {
-        setTimeout(() => {
-          goto(`/earthquakes/${encodeURIComponent(nuevoCountry)}/${encodeURIComponent(nuevaDate)}`);
-        }, 1500);
-      }
+      setTimeout(() => {
+        goto('/earthquakes');
+      }, 1500);
     } catch {
-      mostrarMensaje('No se ha podido conectar con la API.', 'error');
+      mensaje = 'No se ha podido conectar con la API.';
+      tipoMensaje = 'error';
     } finally {
       guardando = false;
     }
@@ -121,7 +86,7 @@
 </script>
 
 <svelte:head>
-  <title>Editar terremoto — {country} / {date}</title>
+  <title>Editar terremoto — {data.country}</title>
 </svelte:head>
 
 <p>
@@ -129,17 +94,22 @@
 </p>
 
 <h1>Editar terremoto</h1>
-<p>Estás editando el terremoto de <strong>{country}</strong> con fecha de inicio <strong>{date}</strong>.</p>
+<p>Estás editando el terremoto de <strong>{data.country}</strong> con fecha <strong>{data.date}</strong>.</p>
 
-{#if mensaje}
-  <div class={`mensaje ${tipoMensaje}`}>
-    {mensaje}
+{#if data.error || !data.resource}
+  <div class="mensaje error">
+    {traducirErrorApiEarthquake(data.error ?? 404, {
+      country: data.country,
+      fromdate: data.date
+    })}
   </div>
-{/if}
-
-{#if cargando}
-  <p>Cargando datos del terremoto...</p>
 {:else}
+  {#if mensaje}
+    <div class={`mensaje ${tipoMensaje}`}>
+      {mensaje}
+    </div>
+  {/if}
+
   <form
     onsubmit={(e) => { e.preventDefault(); guardarCambios(); }}
     class="formulario"
@@ -189,7 +159,7 @@
       <button type="submit" disabled={guardando}>
         {guardando ? 'Guardando...' : 'Guardar cambios'}
       </button>
-      <a href="/earthquakes" class="boton-secundario">Cancelar</a>
+      <button type="button" onclick={() => goto('/earthquakes')}>Cancelar</button>
     </div>
   </form>
 {/if}
@@ -231,21 +201,11 @@
   button:hover:not(:disabled) { background: #ececec; }
   button:disabled { opacity: 0.4; cursor: default; }
 
-  .boton-secundario {
-    padding: 0.6rem 1rem;
-    border: 1px solid #bbb;
-    border-radius: 6px;
-    background: #fff;
-    text-decoration: none;
-    color: inherit;
-  }
-
   .acciones-formulario {
     grid-column: 1 / -1;
     display: flex;
     gap: 0.6rem;
     margin-top: 0.5rem;
-    align-items: center;
   }
 
   .mensaje {
