@@ -203,6 +203,49 @@
   }
 
   onMount(cargarRegistros);
+
+  let filtroBusqueda = $state({
+    country: '',
+    severity: '',
+    alertlevel: '',
+    fromdate: ''
+  });
+
+  async function buscarRegistros() {
+    limpiarMensaje();
+    cargando = true;
+
+    const params = new URLSearchParams();
+    if (filtroBusqueda.country) params.set('country', filtroBusqueda.country);
+    if (filtroBusqueda.severity !== '') params.set('severity', String(filtroBusqueda.severity));
+    if (filtroBusqueda.alertlevel) params.set('alertlevel', filtroBusqueda.alertlevel);
+    if (filtroBusqueda.fromdate) params.set('fromdate', filtroBusqueda.fromdate);
+    params.set('page', '1');
+
+    try {
+      const respuesta = await fetch(`${API_BASE}?${params.toString()}`);
+      if (!respuesta.ok) {
+        mostrarMensaje(traducirErrorApiEarthquake(respuesta.status, {}), 'error');
+        registros = [];
+        return;
+      }
+      registros = await respuesta.json();
+      paginaActual = 1;
+    } catch {
+      mostrarMensaje('No se ha podido conectar con la API.', 'error');
+      registros = [];
+    } finally {
+      cargando = false;
+    }
+  }
+
+  function limpiarBusqueda() {
+    filtroBusqueda.country = '';
+    filtroBusqueda.severity = '';
+    filtroBusqueda.alertlevel = '';
+    filtroBusqueda.fromdate = '';
+    cargarRegistros(1);
+  }
 </script>
 
 <svelte:head>
@@ -281,6 +324,46 @@
 </section>
 
 <section class="bloque">
+  <h2>Buscar terremotos</h2>
+
+  <form
+    onsubmit={(e) => { e.preventDefault(); buscarRegistros(); }}
+    class="formulario"
+  >
+    <label>
+      País
+      <input bind:value={filtroBusqueda.country} placeholder="Ej: Spain" />
+    </label>
+
+    <label>
+      Severidad mínima
+      <input bind:value={filtroBusqueda.severity} type="number" step="0.1" placeholder="Ej: 5.0" />
+    </label>
+
+    <label>
+      Nivel de alerta
+      <select bind:value={filtroBusqueda.alertlevel}>
+        <option value="">— Todos —</option>
+        <option value="Green">Verde</option>
+        <option value="Yellow">Amarillo</option>
+        <option value="Orange">Naranja</option>
+        <option value="Red">Rojo</option>
+      </select>
+    </label>
+
+    <label>
+      Fecha de inicio
+      <input bind:value={filtroBusqueda.fromdate} type="date" />
+    </label>
+
+    <div class="acciones-formulario">
+      <button type="submit">Buscar</button>
+      <button type="button" onclick={limpiarBusqueda}>Limpiar búsqueda</button>
+    </div>
+  </form>
+</section>
+
+<section class="bloque">
   <h2>Listado de terremotos</h2>
 
   <div class="acciones-superiores">
@@ -336,13 +419,19 @@
               <td>{registro.depth ?? '—'}</td>
               <td>{registro.exposed_population != null ? registro.exposed_population.toLocaleString('es-ES') : '—'}</td>
               <td class="acciones-celda">
-                <button
-                  type="button"
-                  onclick={() => borrarRegistro(registro.country, registro.fromdate)}
-                >
-                  Eliminar
-                </button>
-              </td>
+              <a
+                href={`/earthquakes/${encodeURIComponent(registro.country)}/${encodeURIComponent(registro.fromdate)}`}
+                class="boton-editar"
+              >
+                Editar
+              </a>
+              <button
+                type="button"
+                onclick={() => borrarRegistro(registro.country, registro.fromdate)}
+              >
+                Eliminar
+              </button>
+            </td>
             </tr>
           {/each}
         </tbody>
@@ -467,5 +556,19 @@
   .mensaje.error {
     background: #fdecec;
     border: 1px solid #d98d8d;
+  }
+
+  .boton-editar {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid #999;
+    border-radius: 6px;
+    background: #f5f5f5;
+    text-decoration: none;
+    color: inherit;
+    font: inherit;
+  }
+
+  .boton-editar:hover {
+    background: #ececec;
   }
 </style>
