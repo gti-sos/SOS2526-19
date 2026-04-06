@@ -420,7 +420,7 @@
               <td>{registro.exposed_population != null ? registro.exposed_population.toLocaleString('es-ES') : '—'}</td>
               <td class="acciones-celda">
               <a
-                href={`/earthquakes/${encodeURIComponent(registro.country)}/${encodeURIComponent(registro.fromdate)}`}
+                href={`/earthquakes/edit/${encodeURIComponent(registro.country)}/${encodeURIComponent(registro.fromdate)}`}
                 class="boton-editar"
               >
                 Editar
