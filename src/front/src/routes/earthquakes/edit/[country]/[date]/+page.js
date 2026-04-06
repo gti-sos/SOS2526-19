@@ -1,7 +1,7 @@
 /** @type {import('@sveltejs/kit').Load} */
 export async function load({ params, fetch }) {
   const country = params.country ?? '';
-  const date = params.date ?? '';
+  const date = params.fromdate ?? '';
   const API_BASE = '/api/v1/earthquakes';
 
   try {
