@@ -32,7 +32,7 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   await fila.getByRole('link', { name: 'Editar' }).click();
 
   await expect(page).toHaveURL(
-    `http://localhost:3000/earthquakes/${encodeURIComponent(country)}/${encodeURIComponent(fromdate)}`
+    `http://localhost:3000/earthquakes/edit/${encodeURIComponent(country)}/${encodeURIComponent(fromdate)}`
   );
 
   await expect(page.locator('h1')).toContainText('Editar terremoto');
