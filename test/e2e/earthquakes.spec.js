@@ -102,4 +102,13 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   await page.goto('http://localhost:3000/earthquakes');
 
   await expect(page.locator('tbody tr').first()).toBeVisible();
+
+  // ---------- VERIFICAR LISTADO ----------
+  const filasCount = await page.locator('tbody tr').count();
+  expect(filasCount).toBeGreaterThan(0);
+
+  const primeraFila = page.locator('tbody tr').first();
+  await expect(primeraFila.locator('td').nth(0)).not.toBeEmpty(); // País
+  await expect(primeraFila.locator('td').nth(1)).not.toBeEmpty(); // Fecha de inicio
+  await expect(primeraFila.locator('td').nth(3)).not.toBeEmpty(); // Severidad
 });
