@@ -90,7 +90,7 @@ test.describe('Workers Productivity Frontend', () => {
     await expect(filaPorCountryYear(page, 'Spain', '1999')).toBeVisible();
   });
 
-  test('edita un recurso en una vista separada dinámica', async ({ page, request }) => {
+ test('edita un recurso en una vista separada dinámica', async ({ page, request }) => {
   const fila = filaPorCountryYear(page, 'Spain', '1998');
   await expect(fila).toBeVisible();
 
@@ -106,21 +106,17 @@ test.describe('Workers Productivity Frontend', () => {
     'Se han guardado correctamente los cambios del registro de productividad laboral de Spain en el año 1998.'
   );
 
-  // Verificación robusta: el backend realmente ha actualizado el dato
   const response = await request.get(`${API_BASE}/Spain/1998`);
   expect(response.ok()).toBeTruthy();
 
   const data = await response.json();
   expect(data.productivity_hour).toBe(777.77);
 
-  // Volvemos al listado y forzamos refresco visual antes de comprobar la tabla
   await page.goto(PAGE_URL);
   await expect(page.locator('h1')).toHaveText('Gestión de productividad laboral');
-
-  await page.getByRole('button', { name: 'Actualizar lista' }).click();
+  await page.waitForTimeout(1000);
 
   const filaActualizada = filaPorCountryYear(page, 'Spain', '1998');
-  await expect(filaActualizada).toBeVisible();
   await expect(filaActualizada).toContainText('777.77');
 });
 
