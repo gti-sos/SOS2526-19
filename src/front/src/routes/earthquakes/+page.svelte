@@ -91,7 +91,7 @@
    * @param {number} [pagina=1]
    */
   async function cargarRegistros(pagina = 1) {
-    limpiarMensaje();
+    // limpiarMensaje();
     cargando = true;
 
     try {
