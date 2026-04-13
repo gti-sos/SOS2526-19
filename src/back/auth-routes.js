@@ -3,10 +3,6 @@ import { generateToken } from "./jwtAuth.js";
 
 const router = express.Router();
 
-/**
- * Usuario de prueba para la práctica.
- * Más adelante podrías sustituirlo por usuarios reales en BD.
- */
 const DEMO_USER = {
     username: "admin",
     password: "admin123",

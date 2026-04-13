@@ -14,9 +14,11 @@ import { loadBackendJMJ } from './src/back/index-JMJ.js';
 import {handler} from './src/front/build/handler.js';
 
 import dotenv from "dotenv";
-dotenv.config();
-import authRoutes from "./src/back/auth-routes.js";
 
+import authRoutes from "./src/back/auth-routes.js";
+import { loadGoogleOAuth } from "./src/back/oauth-google.js";
+
+dotenv.config();
 //============ INICIAR LA APP WEB ============//
 export const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 
@@ -31,6 +33,7 @@ const PORT = process.env.PORT || 3000; // Render te da el puerto en process.env.
 app.listen(PORT, console.log(`Server running on port ${PORT}`));
 
 app.use(authRoutes);
+loadGoogleOAuth(app);
 
 loadBackendPRA(app);
 loadBackendRDB(app);

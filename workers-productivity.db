@@ -1,3 +1,7 @@
+{"id":1,"country":"JWTLand","year":2025,"productivity_hour":100,"avg_annual_hours":1500,"gpd_per_capita":30000,"human_capital":2.5,"capital_stock_worker":50000,"employment":60,"household_consum":40,"investment_share":20,"key":"JWTLand-2025","_id":"NcZblETS2Bf1q0dV"}
+{"id":2,"country":"prueba","year":2025,"productivity_hour":100,"avg_annual_hours":1500,"gpd_per_capita":30000,"human_capital":2.5,"capital_stock_worker":50000,"employment":60,"household_consum":40,"investment_share":20,"key":"prueba-2025","_id":"TmFIksGE7jhrLsO2"}
 {"$$indexCreated":{"fieldName":"key","unique":true,"sparse":false}}
 {"$$indexCreated":{"fieldName":"key","unique":true}}
-{"id":1,"country":"JWTLand","year":2025,"productivity_hour":100,"avg_annual_hours":1500,"gpd_per_capita":30000,"human_capital":2.5,"capital_stock_worker":50000,"employment":60,"household_consum":40,"investment_share":20,"key":"JWTLand-2025","_id":"NcZblETS2Bf1q0dV"}
+{"id":3,"country":"pruebaaaa","year":2025,"productivity_hour":100,"avg_annual_hours":1500,"gpd_per_capita":30000,"human_capital":2.5,"capital_stock_worker":50000,"employment":60,"household_consum":40,"investment_share":20,"key":"pruebaaaa-2025","_id":"5ujVblTyS1frRiYJ"}
+{"id":4,"country":"pruebaaa","year":2025,"productivity_hour":100,"avg_annual_hours":1500,"gpd_per_capita":30000,"human_capital":2.5,"capital_stock_worker":50000,"employment":60,"household_consum":40,"investment_share":20,"key":"pruebaaa-2025","_id":"nF2Gogk1FnoTcWLX"}
+{"id":5,"country":"pruebaaaaaaaaaaaaaa","year":2025,"productivity_hour":100,"avg_annual_hours":1500,"gpd_per_capita":30000,"human_capital":2.5,"capital_stock_worker":50000,"employment":60,"household_consum":40,"investment_share":20,"key":"pruebaaaaaaaaaaaaaa-2025","_id":"rbY438L5u9oTogTC"}
