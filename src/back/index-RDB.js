@@ -2,8 +2,6 @@
 //============ FUNCIONES RDB ============//
 //=======================================//
 
-import { verifyToken } from "./jwtAuth.js";
-
 import Datastore from '@seald-io/nedb';
 
 const SHEET_NAME_RDB = "Raúl";

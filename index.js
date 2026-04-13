@@ -13,12 +13,6 @@ import { loadBackendJMJ } from './src/back/index-JMJ.js';
 
 import {handler} from './src/front/build/handler.js';
 
-import dotenv from "dotenv";
-
-import authRoutes from "./src/back/auth-routes.js";
-import { loadGoogleOAuth } from "./src/back/oauth-google.js";
-
-dotenv.config();
 //============ INICIAR LA APP WEB ============//
 export const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 
@@ -31,15 +25,6 @@ app.use(express.json()); // parsea toda peticion de la app a formato JSON
 
 const PORT = process.env.PORT || 3000; // Render te da el puerto en process.env.PORT
 app.listen(PORT, console.log(`Server running on port ${PORT}`));
-
-app.use(authRoutes);
-
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  console.log("OAuth con Google activado");
-  loadGoogleOAuth(app);
-} else {
-  console.log("OAuth con Google desactivado: faltan GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET");
-}
 
 loadBackendPRA(app);
 loadBackendRDB(app);
