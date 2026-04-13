@@ -2,6 +2,8 @@
 //============ FUNCIONES RDB ============//
 //=======================================//
 
+import { verifyToken } from "./jwtAuth.js";
+
 import Datastore from '@seald-io/nedb';
 
 const SHEET_NAME_RDB = "Raúl";
@@ -521,7 +523,7 @@ app.get(`${BASE_RDB}/:country/:year`, async (req, res) => {
 //================ POST =================//
 //=======================================//
 
-app.post(BASE_RDB, async (req, res) => {
+app.post(BASE_RDB, verifyToken, async (req, res) => {
   try {
     const normalized = normalizeRdbBody(req.body);
 
@@ -550,7 +552,7 @@ app.post(BASE_RDB, async (req, res) => {
 //================= PUT =================//
 //=======================================//
 
-app.put(`${BASE_RDB}/:country/:year`, async (req, res) => {
+app.put(`${BASE_RDB}/:country/:year`, verifyToken, async (req, res) => {
   try {
     const country = req.params.country;
     const year = Number(req.params.year);
@@ -607,7 +609,7 @@ app.put(`${BASE_RDB}/:country/:year`, async (req, res) => {
 //=============== DELETE ================//
 //=======================================//
 
-app.delete(`${BASE_RDB}/:country/:year`, async (req, res) => {
+app.delete(`${BASE_RDB}/:country/:year`, verifyToken, async (req, res) => {
   try {
     const country = req.params.country;
     const year = Number(req.params.year);
@@ -628,7 +630,7 @@ app.delete(`${BASE_RDB}/:country/:year`, async (req, res) => {
   }
 });
 
-app.delete(BASE_RDB, async (req, res) => {
+app.delete(BASE_RDB, verifyToken, async (req, res) => {
   try {
     await rdbRemove({}, { multi: true });
     return res.status(200).send();

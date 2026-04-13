@@ -13,6 +13,10 @@ import { loadBackendJMJ } from './src/back/index-JMJ.js';
 
 import {handler} from './src/front/build/handler.js';
 
+import dotenv from "dotenv";
+dotenv.config();
+import authRoutes from "./src/back/auth-routes.js";
+
 //============ INICIAR LA APP WEB ============//
 export const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
 
@@ -25,6 +29,8 @@ app.use(express.json()); // parsea toda peticion de la app a formato JSON
 
 const PORT = process.env.PORT || 3000; // Render te da el puerto en process.env.PORT
 app.listen(PORT, console.log(`Server running on port ${PORT}`));
+
+app.use(authRoutes);
 
 loadBackendPRA(app);
 loadBackendRDB(app);
