@@ -33,7 +33,13 @@ const PORT = process.env.PORT || 3000; // Render te da el puerto en process.env.
 app.listen(PORT, console.log(`Server running on port ${PORT}`));
 
 app.use(authRoutes);
-loadGoogleOAuth(app);
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  console.log("OAuth con Google activado");
+  loadGoogleOAuth(app);
+} else {
+  console.log("OAuth con Google desactivado: faltan GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET");
+}
 
 loadBackendPRA(app);
 loadBackendRDB(app);
