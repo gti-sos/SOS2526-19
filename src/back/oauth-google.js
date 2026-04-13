@@ -13,12 +13,6 @@ function loadGoogleOAuth(app) {
   const SESSION_SECRET =
     process.env.SESSION_SECRET || "mi_session_secret_sos2526_19";
 
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    throw new Error(
-      "Faltan GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET en el archivo .env"
-    );
-  }
-
   app.use(
     session({
       secret: SESSION_SECRET,
@@ -116,4 +110,3 @@ function loadGoogleOAuth(app) {
 }
 
 export { loadGoogleOAuth };
-
