@@ -1,85 +1,190 @@
 <script>
-    import Highcharts from 'highcharts';
+    //@ts-nocheck
     import { onMount } from 'svelte';
+    import Highcharts from 'highcharts';
 
-    let myData = $state();
+    let dataset = {};
+    let chart;
 
-    onMount(async () => {
-        const res = await fetch("/api/v1/drought-stats");
-        myData = await res.json();
+    let startYear;
+    let endYear;
 
-        // @ts-ignore
-        const grouped = myData.reduce((acc, item) => {
+    let input;
+
+    const nbr = 10;
+
+    async function loadData() {
+        const res = await fetch('/api/v1/drought-stats');
+        const raw = await res.json();
+
+        const years = [];
+
+        raw.forEach(item => {
             const country = item.country;
 
-            if (!acc[country]) {
-                acc[country] = {
-                    severity: 0,
-                    duration: 0
-                };
+            const from = Number(item.from_date);
+            const to = Number(item.to_date);
+
+            for (let year = from; year <= to; year++) {
+                years.push(year);
+
+                if (!dataset[country]) dataset[country] = {};
+                if (!dataset[country][year]) {
+                    dataset[country][year] = {
+                        severity: 0,
+                        duration: 0,
+                        alertSum: 0,
+                        count: 0
+                    };
+                }
+
+                dataset[country][year].severity += item.severity_km2;
+                dataset[country][year].duration += item.duration_day;
+                dataset[country][year].alertSum += item.episode_alert_score;
+                dataset[country][year].count += 1;
             }
+        });
 
-            acc[country].severity += item.severity_km2;
-            acc[country].duration += item.duration_day;
+        startYear = Math.min(...years);
+        endYear = Math.max(...years);
 
-            return acc;
-        }, {});
+        input.min = startYear;
+        input.max = endYear;
+        input.value = startYear;
+    }
 
-        const countries = Object.keys(grouped);
+    function getEntry(values, year) {
+        return values?.[year];
+    }
 
-        const severityData = countries.map(country => grouped[country].severity);
-        const durationData = countries.map(country => grouped[country].duration);
+    function getAlert(entry) {
+        return entry.count ? entry.alertSum / entry.count : 0;
+    }
 
-        // @ts-ignore
-        Highcharts.chart('container', {
+    function getSeverity(entry) {
+        return entry?.severity || 0;
+    }
+
+    function getDuration(entry) {
+        return entry?.duration || 0;
+    }
+
+    function buildSeries(year) {
+        year = Number(year);
+
+        const alert = [];
+        const severity = [];
+        const duration = [];
+
+        Object.entries(dataset).forEach(([country, values]) => {
+            const entry = getEntry(values, year);
+
+            alert.push([country, entry ? getAlert(entry) : 0]);
+            severity.push([country, entry ? getSeverity(entry) : 0]);
+            duration.push([country, entry ? getDuration(entry) : 0]);
+        });
+
+        return {
+            alert: alert.sort((a, b) => b[1] - a[1]).slice(0, nbr),
+            severity: severity.sort((a, b) => b[1] - a[1]).slice(0, nbr),
+            duration: duration.sort((a, b) => b[1] - a[1]).slice(0, nbr)
+        };
+    }
+
+    function updateChart(year) {
+        const data = buildSeries(year);
+
+        chart.series[0].setData(data.alert, false);
+        chart.series[1].setData(data.severity, false);
+        chart.series[2].setData(data.duration, false);
+
+        chart.redraw();
+
+        chart.update({
+            subtitle: {
+                text: `<span style="font-size: 80px">${year}</span>`,
+                useHTML: true
+            }
+        }, false);
+    }
+
+    onMount(async () => {
+
+        input = document.querySelector('input');
+
+        await loadData();
+
+        const data = buildSeries(startYear);
+
+        chart = Highcharts.chart('container', {
             chart: {
                 type: 'bar',
-                reflow: true
+                animation: { duration: 500 },
+                marginRight: 50
             },
+
             title: {
-                text: 'Drought stats by country'
+                text: 'Drought stats by country (multi metric)',
+                align: 'left'
             },
+
+            subtitle: {
+                text: `<span style="font-size: 80px">${startYear}</span>`,
+                useHTML: true,
+                floating: true,
+                align: 'right',
+                verticalAlign: 'middle'
+            },
+
+            legend: {
+                enabled: true
+            },
+
             xAxis: {
-                categories: countries,
+                type: 'category'
+            },
+
+            yAxis: {
                 title: {
-                    text: 'Country'
+                    text: 'Values'
                 }
             },
-            yAxis: [{
-                title: {
-                    text: 'Severity (km²)'
-                }
-            }, {
-                title: {
-                    text: 'Duration (days)'
-                },
-                opposite: true
-            }],
-            tooltip: {
-                shared: true
-            },
+
             plotOptions: {
-                bar: {
+                series: {
+                    animation: false,
+                    dataSorting: {
+                        enabled: true,
+                        matchByName: true
+                    },
                     dataLabels: {
                         enabled: true
                     }
                 }
             },
+
             series: [
                 {
-                    name: 'Total Severity (km²)',
-                    data: severityData,
-                    yAxis: 0
+                    name: 'Alert Score',
+                    data: data.alert
                 },
                 {
-                    name: 'Total Duration (days)',
-                    data: durationData,
-                    yAxis: 1
+                    name: 'Severity (km²)',
+                    data: data.severity
+                },
+                {
+                    name: 'Duration (days)',
+                    data: data.duration
                 }
             ]
         });
 
-    })
+        input.addEventListener('input', (e) => {
+            updateChart(Number(e.target.value));
+        });
+    });
 </script>
 
-<div id="container"></div>
+<input type="range" />
+
+<div id="container" style="height: 500px;"></div>
