@@ -88,7 +88,7 @@
 
   /**
    * @param {ScatterPoint[]} puntos
-   * @returns {Array<{ type: 'line', name: string, data: ScatterPoint[], marker: { enabled: boolean, radius: number }, lineWidth: number }>}
+   * @returns {Array<{ type: 'scatter', name: string, data: ScatterPoint[], marker: { enabled: boolean, radius: number }, lineWidth: number }>}
    */
   function crearSeriesPorPais(puntos) {
     /** @type {Map<string, ScatterPoint[]>} */
@@ -101,7 +101,7 @@
     }
 
     return Array.from(puntosPorPais.entries()).map(([country, puntosPais]) => ({
-      type: 'line',
+      type: 'scatter',
       name: country,
       data: puntosPais.sort((a, b) => a.year - b.year),
       marker: {
