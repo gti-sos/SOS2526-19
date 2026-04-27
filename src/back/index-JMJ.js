@@ -1,7 +1,7 @@
 "use strict";
 
 import xlsx from 'xlsx';
-import dataStore from 'nedb'; //const Datastore = require("@seald-io/nedb")
+import dataStore from '@seald-io/nedb'; //const Datastore = require("@seald-io/nedb")
 
 // ---------------- VARIABLES BASE DE DATOS ---------------- //
 const EXCEL_FILE = "./SOS2526-19-Propuesta.xlsx";
@@ -66,7 +66,7 @@ export function loadBackendJMJ(app) {
 		}
 
 		db.count(query, (err, total) => {
-			if (err) return res.status(500).json({ error: "Error al contar datos." });
+			if (err) return res.status(500).json({ error: "Error al contar datos. "});
 
 			db.find(query).skip(skip).limit(limit).exec((err, docs) => {
 				if (err) return res.status(500).json({ error: "Error al obtener datos." });

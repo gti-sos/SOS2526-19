@@ -32,8 +32,7 @@
   let cargando = $state(false);
   let paginaActual = $state(1);
 
-  let mensaje = $state('');
-  let tipoMensaje = $state('');
+  let estadoMensaje = $state({ texto: '', tipo: '' });
 
   /** @type {EarthquakeForm} */
   let formulario = $state({
@@ -51,13 +50,11 @@
    * @param {'exito' | 'error'} [tipo='exito']
    */
   function mostrarMensaje(texto, tipo = 'exito') {
-    mensaje = texto;
-    tipoMensaje = tipo;
+    estadoMensaje = { texto, tipo };
   }
 
   function limpiarMensaje() {
-    mensaje = '';
-    tipoMensaje = '';
+    estadoMensaje = { texto: '', tipo: '' };
   }
 
   function resetFormulario() {
@@ -91,7 +88,6 @@
    * @param {number} [pagina=1]
    */
   async function cargarRegistros(pagina = 1) {
-    // limpiarMensaje();
     cargando = true;
 
     try {
@@ -225,7 +221,13 @@
     try {
       const respuesta = await fetch(`${API_BASE}?${params.toString()}`);
       if (!respuesta.ok) {
-        mostrarMensaje(traducirErrorApiEarthquake(respuesta.status, {}), 'error');
+        mostrarMensaje(
+          traducirErrorApiEarthquake(respuesta.status, {
+            country: filtroBusqueda.country || undefined,
+            fromdate: filtroBusqueda.fromdate || undefined
+          }),
+          'error'
+        );
         registros = [];
         return;
       }
@@ -259,12 +261,13 @@
   <a href="/">Volver a la portada del equipo</a>
 </p>
 
-{#if mensaje}
-  <div class={`mensaje ${tipoMensaje}`}>
-    {mensaje}
+{#if estadoMensaje.texto}
+  <div class={`mensaje ${estadoMensaje.tipo}`}>
+    {estadoMensaje.texto}
   </div>
 {/if}
 
+<!-- registrar de terremotos -->
 <section class="bloque">
   <h2>Registrar nuevo terremoto</h2>
 
@@ -323,6 +326,7 @@
   </form>
 </section>
 
+<!-- buscar de terremotos -->
 <section class="bloque">
   <h2>Buscar terremotos</h2>
 
@@ -363,6 +367,7 @@
   </form>
 </section>
 
+<!-- listado de terremotos -->
 <section class="bloque">
   <h2>Listado de terremotos</h2>
 
