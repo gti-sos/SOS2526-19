@@ -245,7 +245,7 @@
       },
       yAxis: {
         title: {
-          text: 'Impacto ambiental combinado'
+          text: 'Impacto ambiental combinado (sequias + terremotos)'
         }
       },
       tooltip: {
@@ -337,13 +337,14 @@
   <section class="descripcion">
     <h2>Descripcion</h2>
     <p>
-      Esta visualización integra las tres APIs del grupo utilizando el país como dimensión común.
-      El eje X representa la productividad por hora media procedente de workers-productivity, el
-      eje Y representa un indicador combinado de impacto ambiental calculado a partir de los datos
-      de sequías y terremotos, y el tamaño de la burbuja representa la población expuesta. El
-      objetivo es identificar qué países presentan mayor vulnerabilidad relativa: aquellos con
-      menor productividad y mayor impacto ambiental aparecen en la zona superior izquierda del
-      gráfico.
+      Esta visualizacion integra las tres APIs del grupo utilizando el pais como dimension comun.
+      El eje X muestra la productividad por hora media de workers-productivity. El eje Y muestra
+      un impacto ambiental combinado: para cada pais se suma el impacto de sequias
+      (severity_km2 multiplicado por duration_day en cada registro de drought-stats) y el impacto
+      de terremotos (severity multiplicado por depth en cada registro de earthquakes). Por tanto,
+      un valor mas alto en el eje Y significa mayor exposicion acumulada a eventos ambientales
+      intensos o prolongados. El tamano de la burbuja representa la poblacion expuesta registrada
+      en earthquakes.
     </p>
   </section>
 </main>
