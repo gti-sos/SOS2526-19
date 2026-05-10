@@ -25,7 +25,6 @@
    */
 
   const API_BASE = '/api/v1/earthquakes';
-  const NOMBRE_RECURSO = 'terremoto';
 
   /** @type {EarthquakeRecord[]} */
   let registros = $state([]);
@@ -89,19 +88,13 @@
    */
   async function cargarRegistros(pagina = 1) {
     cargando = true;
-
     try {
       const respuesta = await fetch(`${API_BASE}?page=${pagina}`);
-
       if (!respuesta.ok) {
-        mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, {}),
-          'error'
-        );
+        mostrarMensaje(traducirErrorApiEarthquake(respuesta.status, {}), 'error');
         registros = [];
         return;
       }
-
       registros = /** @type {EarthquakeRecord[]} */ (await respuesta.json());
       paginaActual = pagina;
     } catch (error) {
@@ -114,27 +107,20 @@
 
   async function crearRegistro() {
     limpiarMensaje();
-
     const payload = normalizarPayload();
-
     try {
       const respuesta = await fetch(API_BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       if (!respuesta.ok) {
         mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, {
-            country: payload.country,
-            fromdate: payload.fromdate
-          }),
+          traducirErrorApiEarthquake(respuesta.status, { country: payload.country, fromdate: payload.fromdate }),
           'error'
         );
         return;
       }
-
       mostrarMensaje('El terremoto se ha registrado correctamente.', 'exito');
       resetFormulario();
       await cargarRegistros(paginaActual);
@@ -145,21 +131,14 @@
 
   async function borrarTodos() {
     limpiarMensaje();
-
     const confirmado = confirm('¿Seguro que quieres borrar todos los terremotos? Esta acción no se puede deshacer.');
     if (!confirmado) return;
-
     try {
       const respuesta = await fetch(API_BASE, { method: 'DELETE' });
-
       if (!respuesta.ok) {
-        mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, {}),
-          'error'
-        );
+        mostrarMensaje(traducirErrorApiEarthquake(respuesta.status, {}), 'error');
         return;
       }
-
       registros = [];
       mostrarMensaje('Todos los terremotos se han eliminado correctamente.', 'exito');
     } catch (error) {
@@ -173,24 +152,17 @@
    */
   async function borrarRegistro(country, fromdate) {
     limpiarMensaje();
-
     const confirmado = confirm(`¿Seguro que quieres eliminar el terremoto de "${country}" ocurrido el ${fromdate}?`);
     if (!confirmado) return;
-
     try {
       const respuesta = await fetch(
         `${API_BASE}/${encodeURIComponent(country)}/${encodeURIComponent(fromdate)}`,
         { method: 'DELETE' }
       );
-
       if (!respuesta.ok) {
-        mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, { country, fromdate }),
-          'error'
-        );
+        mostrarMensaje(traducirErrorApiEarthquake(respuesta.status, { country, fromdate }), 'error');
         return;
       }
-
       mostrarMensaje(`El terremoto de "${country}" del ${fromdate} se ha eliminado correctamente.`, 'exito');
       await cargarRegistros(paginaActual);
     } catch (error) {
@@ -210,14 +182,12 @@
   async function buscarRegistros() {
     limpiarMensaje();
     cargando = true;
-
     const params = new URLSearchParams();
     if (filtroBusqueda.country) params.set('country', filtroBusqueda.country);
     if (filtroBusqueda.severity !== '') params.set('severity', String(filtroBusqueda.severity));
     if (filtroBusqueda.alertlevel) params.set('alertlevel', filtroBusqueda.alertlevel);
     if (filtroBusqueda.fromdate) params.set('fromdate', filtroBusqueda.fromdate);
     params.set('page', '1');
-
     try {
       const respuesta = await fetch(`${API_BASE}?${params.toString()}`);
       if (!respuesta.ok) {
@@ -262,21 +232,18 @@
 </p>
 
 {#if estadoMensaje.texto}
-  <div class={`mensaje ${estadoMensaje.tipo}`}>
+  <div class="mensaje {estadoMensaje.tipo}">
     {estadoMensaje.texto}
   </div>
 {/if}
 
-<!-- registrar de terremotos -->
+<!-- Registrar terremoto -->
 <section class="bloque">
   <h2>Registrar nuevo terremoto</h2>
 
   <form
-    onsubmit={(event) => {
-      event.preventDefault();
-      crearRegistro();
-    }}
-    class="formulario"
+    onsubmit={(event) => { event.preventDefault(); crearRegistro(); }}
+    class="formulario-fila"
   >
     <label>
       País <span class="obligatorio">*</span>
@@ -294,7 +261,7 @@
     </label>
 
     <label>
-      Severidad (escala Richter) <span class="obligatorio">*</span>
+      Severidad (Richter) <span class="obligatorio">*</span>
       <input bind:value={formulario.severity} type="number" step="0.1" placeholder="Ej: 6.5" required />
     </label>
 
@@ -326,13 +293,13 @@
   </form>
 </section>
 
-<!-- buscar de terremotos -->
+<!-- Buscar terremotos -->
 <section class="bloque">
   <h2>Buscar terremotos</h2>
 
   <form
     onsubmit={(e) => { e.preventDefault(); buscarRegistros(); }}
-    class="formulario"
+    class="formulario-fila"
   >
     <label>
       País
@@ -367,7 +334,7 @@
   </form>
 </section>
 
-<!-- listado de terremotos -->
+<!-- Listado de terremotos -->
 <section class="bloque">
   <h2>Listado de terremotos</h2>
 
@@ -381,17 +348,13 @@
       type="button"
       disabled={paginaActual <= 1}
       onclick={() => cargarRegistros(paginaActual - 1)}
-    >
-      ← Anterior
-    </button>
+    >← Anterior</button>
     <span>Página {paginaActual}</span>
     <button
       type="button"
       disabled={registros.length < 10}
       onclick={() => cargarRegistros(paginaActual + 1)}
-    >
-      Siguiente →
-    </button>
+    >Siguiente →</button>
   </div>
 
   {#if cargando}
@@ -424,19 +387,15 @@
               <td>{registro.depth ?? '—'}</td>
               <td>{registro.exposed_population != null ? registro.exposed_population.toLocaleString('es-ES') : '—'}</td>
               <td class="acciones-celda">
-              <a
-                href={`/earthquakes/edit/${encodeURIComponent(registro.country)}/${encodeURIComponent(registro.fromdate)}`}
-                class="boton-editar"
-              >
-                Editar
-              </a>
-              <button
-                type="button"
-                onclick={() => borrarRegistro(registro.country, registro.fromdate)}
-              >
-                Eliminar
-              </button>
-            </td>
+                <a
+                  href={`/earthquakes/edit/${encodeURIComponent(registro.country)}/${encodeURIComponent(registro.fromdate)}`}
+                  class="boton-editar"
+                >Editar</a>
+                <button
+                  type="button"
+                  onclick={() => borrarRegistro(registro.country, registro.fromdate)}
+                >Eliminar</button>
+              </td>
             </tr>
           {/each}
         </tbody>
@@ -458,17 +417,22 @@
     margin: 1.5rem 0;
   }
 
-  .formulario {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  /* Campos en una sola fila horizontal, con wrap para pantallas pequeñas */
+  .formulario-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
     gap: 0.9rem;
   }
 
-  label {
+  .formulario-fila label {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
     font-weight: 600;
+    /* Crecen equitativamente; min-width para que no queden demasiado estrechos */
+    flex: 1 1 120px;
+    min-width: 0;
   }
 
   .obligatorio {
@@ -481,6 +445,8 @@
     border: 1px solid #bbb;
     border-radius: 6px;
     font: inherit;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   button {
@@ -489,6 +455,7 @@
     border-radius: 6px;
     background: #f5f5f5;
     cursor: pointer;
+    white-space: nowrap;
   }
 
   button:hover:not(:disabled) {
@@ -500,18 +467,27 @@
     cursor: default;
   }
 
-  .acciones-formulario,
-  .acciones-superiores,
+  /* Botones alineados al fondo junto al resto de campos */
+  .acciones-formulario {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  .acciones-superiores {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
   .acciones-celda {
     display: flex;
     gap: 0.6rem;
     flex-wrap: wrap;
     align-items: center;
-  }
-
-  .acciones-formulario {
-    grid-column: 1 / -1;
-    margin-top: 0.5rem;
   }
 
   .paginacion {
