@@ -48,10 +48,7 @@
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   let timeoutMensaje;
 
-  /**
-   * @param {string} texto
-   * @param {'exito' | 'error'} [tipo='exito']
-   */
+  /** @param {string} texto @param {'exito' | 'error'} [tipo='exito'] */
   function mostrarMensaje(texto, tipo = 'exito') {
     estadoMensaje = { texto, tipo };
 
@@ -72,9 +69,7 @@
     formulario.exposed_population = '';
   }
 
-  /**
-   * @returns {EarthquakeRecord}
-   */
+  /** @returns {EarthquakeRecord} */
   function normalizarPayload() {
     /** @type {any} */
     const payload = {
@@ -89,9 +84,7 @@
     return payload;
   }
 
-  /**
-   * @param {number} [pagina=1]
-   */
+  /** @param {number} [pagina=1] */
   async function cargarRegistros(pagina = 1) {
     cargando = true;
     try {
@@ -169,10 +162,7 @@
     }
   }
 
-  /**
-   * @param {string} country
-   * @param {string} fromdate
-   */
+  /** @param {string} country @param {string} fromdate */
   async function borrarRegistro(country, fromdate) {
     const confirmado = confirm(`¿Seguro que quieres eliminar el terremoto de "${country}" ocurrido el ${fromdate}?`);
     if (!confirmado) return;
@@ -198,7 +188,10 @@
     country: '',
     severity: '',
     alertlevel: '',
-    fromdate: ''
+    fromdate: '',
+    todate: '',
+    depth: '', 
+    exposed_population: ''
   });
 
   async function buscarRegistros() {
@@ -208,6 +201,9 @@
     if (filtroBusqueda.severity !== '') params.set('severity', String(filtroBusqueda.severity));
     if (filtroBusqueda.alertlevel) params.set('alertlevel', filtroBusqueda.alertlevel);
     if (filtroBusqueda.fromdate) params.set('fromdate', filtroBusqueda.fromdate);
+    if (filtroBusqueda.todate) params.set('todate', filtroBusqueda.todate);
+    if (filtroBusqueda.depth !== '') params.set('depth', String(filtroBusqueda.depth));
+    if (filtroBusqueda.exposed_population !== '') params.set('exposed_population', String(filtroBusqueda.exposed_population));
     params.set('page', '1');
     try {
       const respuesta = await fetch(`${API_BASE}?${params.toString()}`);
@@ -222,8 +218,18 @@
         registros = [];
         return;
       }
+
       registros = await respuesta.json();
       paginaActual = 1;
+      if (registros.length === 0 && respuesta.ok) {
+        mostrarMensaje(
+          traducirErrorApiEarthquake(404, {
+            country: filtroBusqueda.country || undefined,
+            fromdate: filtroBusqueda.fromdate || undefined
+          }),
+          'exito'
+        );
+      }
     } catch {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
       registros = [];
@@ -237,12 +243,13 @@
     filtroBusqueda.severity = '';
     filtroBusqueda.alertlevel = '';
     filtroBusqueda.fromdate = '';
+    filtroBusqueda.todate = '';
+    filtroBusqueda.depth = '';
+    filtroBusqueda.exposed_population = '';
     cargarRegistros(1);
   }
 
-  /**
-   * @param {string|null} nivel
-   */
+  /** @param {string|null} nivel */
   function claseAlerta(nivel) {
     switch (nivel) {
       case 'Green': return 'badge badge-green';
@@ -253,9 +260,7 @@
     }
   }
 
-  /**
-   * @param {string|null} nivel
-   */
+  /** @param {string|null} nivel*/
   function textoAlerta(nivel) {
     switch (nivel) {
       case 'Green': return 'Verde';
@@ -357,43 +362,56 @@
 <section class="bloque">
   <h2>Buscar terremotos</h2>
 
-  <form
-    onsubmit={(e) => { e.preventDefault(); buscarRegistros(); }}
-    class="formulario-fila"
-  >
-    <div class="formulario-campos">
-      <label>
-        País
-        <input bind:value={filtroBusqueda.country} placeholder="Ej: Spain" />
-      </label>
+  <form onsubmit={(e) => { e.preventDefault(); buscarRegistros(); }} class="formulario-fila">
+  <div class="formulario-campos">
+    <label>
+      País
+      <input bind:value={filtroBusqueda.country} placeholder="Ej: Spain" />
+    </label>
 
-      <label>
-        Severidad mínima
-        <input bind:value={filtroBusqueda.severity} type="number" step="0.1" placeholder="Ej: 5.0" />
-      </label>
+    <label>
+      Severidad mínima
+      <input bind:value={filtroBusqueda.severity} type="number" step="0.1" placeholder="Ej: 5.0" />
+    </label>
 
-      <label>
-        Nivel de alerta
-        <select bind:value={filtroBusqueda.alertlevel}>
-          <option value="">— Todos —</option>
-          <option value="Green">Verde</option>
-          <option value="Yellow">Amarillo</option>
-          <option value="Orange">Naranja</option>
-          <option value="Red">Rojo</option>
-        </select>
-      </label>
+    <label>
+      Nivel de alerta
+      <select bind:value={filtroBusqueda.alertlevel}>
+        <option value="">— Todos —</option>
+        <option value="Green">Verde</option>
+        <option value="Yellow">Amarillo</option>
+        <option value="Orange">Naranja</option>
+        <option value="Red">Rojo</option>
+      </select>
+    </label>
 
-      <label>
-        Fecha de inicio
-        <input bind:value={filtroBusqueda.fromdate} type="date" />
-      </label>
-    </div>
+    <label>
+      Fecha de inicio
+      <input bind:value={filtroBusqueda.fromdate} type="date" />
+    </label>
 
-    <div class="acciones-formulario">
-      <button type="submit" class="btn-primario">Buscar</button>
-      <button type="button" onclick={limpiarBusqueda}>Limpiar búsqueda</button>
-    </div>
-  </form>
+    <!-- Campos nuevos -->
+    <label>
+      Fecha de fin
+      <input bind:value={filtroBusqueda.todate} type="date" />
+    </label>
+
+    <label>
+      Profundidad mínima (km)
+      <input bind:value={filtroBusqueda.depth} type="number" step="0.1" placeholder="Ej: 10" />
+    </label>
+
+    <label>
+      Población expuesta mínima
+      <input bind:value={filtroBusqueda.exposed_population} type="number" placeholder="Ej: 50000" />
+    </label>
+  </div>
+
+  <div class="acciones-formulario">
+    <button type="submit" class="btn-primario">Buscar</button>
+    <button type="button" onclick={limpiarBusqueda}>Limpiar búsqueda</button>
+  </div>
+</form>
 </section>
 
 <!-- Listado de terremotos -->
@@ -738,6 +756,12 @@
 
   /* Mensajes */
   .mensaje {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    z-index: 9999;
     padding: 0.8rem 1rem;
     border-radius: 8px;
     margin: 0.75rem 0;
