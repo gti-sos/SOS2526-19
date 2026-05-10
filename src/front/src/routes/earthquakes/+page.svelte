@@ -271,79 +271,29 @@
   <title>Gestión de terremotos</title>
 </svelte:head>
 
-<h1>Gestión de terremotos</h1>
-<p class="subtitulo">Registra, consulta y elimina eventos sísmicos.</p>
+<header class="hero">
+  <div class="hero-texto">
+    <h1>Gestión de terremotos</h1>
 
-<p>
-  <a href="/" class="enlace-volver">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-    Volver a la portada del equipo
-  </a>
-</p>
+    <p class="subtitulo">
+      Consulta, registra y administra eventos sísmicos de forma centralizada.
+    </p>
+
+    <a href="/" class="enlace-volver">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+
+      Volver a la portada del equipo
+    </a>
+  </div>
+</header>
 
 {#if estadoMensaje.texto}
   <div class="mensaje {estadoMensaje.tipo}">
     {estadoMensaje.texto}
   </div>
 {/if}
-
-<!-- Registrar terremoto -->
-<section class="bloque">
-  <h2>Registrar nuevo terremoto</h2>
-
-  <form
-    onsubmit={(event) => { event.preventDefault(); crearRegistro(); }}
-    class="formulario-fila"
-  >
-    <div class="formulario-campos">
-      <label>
-        <span class="label-text">País <span class="obligatorio">*</span></span>
-        <input bind:value={formulario.country} placeholder="Ej: Spain" required />
-      </label>
-
-      <label>
-        <span class="label-text">Fecha de inicio <span class="obligatorio">*</span></span>
-        <input bind:value={formulario.fromdate} type="date" required />
-      </label>
-
-      <label>
-        Fecha de fin
-        <input bind:value={formulario.todate} type="date" />
-      </label>
-
-      <label>
-        <span class="label-text">Severidad (Richter) <span class="obligatorio">*</span></span>
-        <input bind:value={formulario.severity} type="number" step="0.1" placeholder="Ej: 6.5" required />
-      </label>
-
-      <label>
-        Nivel de alerta
-        <select bind:value={formulario.alertlevel}>
-          <option value="">— Sin especificar —</option>
-          <option value="Green">Verde</option>
-          <option value="Yellow">Amarillo</option>
-          <option value="Orange">Naranja</option>
-          <option value="Red">Rojo</option>
-        </select>
-      </label>
-
-      <label>
-        Profundidad (km)
-        <input bind:value={formulario.depth} type="number" step="0.1" placeholder="Ej: 10" />
-      </label>
-
-      <label>
-        Población expuesta
-        <input bind:value={formulario.exposed_population} type="number" placeholder="Ej: 50000" />
-      </label>
-    </div>
-
-    <div class="acciones-formulario">
-      <button type="submit" class="btn-primario">Registrar terremoto</button>
-      <button type="button" onclick={resetFormulario}>Limpiar formulario</button>
-    </div>
-  </form>
-</section>
 
 <!-- Buscar terremotos -->
 <section class="bloque">
@@ -461,6 +411,64 @@
       onclick={() => cargarRegistros(paginaActual + 1)}
     >Siguiente →</button>
   </div>
+</section>
+
+<!-- Registrar terremoto -->
+<section class="bloque">
+  <h2>Registrar nuevo terremoto</h2>
+
+  <form
+    onsubmit={(event) => { event.preventDefault(); crearRegistro(); }}
+    class="formulario-fila"
+  >
+    <div class="formulario-campos">
+      <label>
+        <span class="label-text">País <span class="obligatorio">*</span></span>
+        <input bind:value={formulario.country} placeholder="Ej: Spain" required />
+      </label>
+
+      <label>
+        <span class="label-text">Fecha de inicio <span class="obligatorio">*</span></span>
+        <input bind:value={formulario.fromdate} type="date" required />
+      </label>
+
+      <label>
+        Fecha de fin
+        <input bind:value={formulario.todate} type="date" />
+      </label>
+
+      <label>
+        <span class="label-text">Severidad (Richter) <span class="obligatorio">*</span></span>
+        <input bind:value={formulario.severity} type="number" step="0.1" placeholder="Ej: 6.5" required />
+      </label>
+
+      <label>
+        Nivel de alerta
+        <select bind:value={formulario.alertlevel}>
+          <option value="">— Sin especificar —</option>
+          <option value="Green">Verde</option>
+          <option value="Yellow">Amarillo</option>
+          <option value="Orange">Naranja</option>
+          <option value="Red">Rojo</option>
+        </select>
+      </label>
+
+      <label>
+        Profundidad (km)
+        <input bind:value={formulario.depth} type="number" step="0.1" placeholder="Ej: 10" />
+      </label>
+
+      <label>
+        Población expuesta
+        <input bind:value={formulario.exposed_population} type="number" placeholder="Ej: 50000" />
+      </label>
+    </div>
+
+    <div class="acciones-formulario">
+      <button type="submit" class="btn-primario">Registrar terremoto</button>
+      <button type="button" onclick={resetFormulario}>Limpiar formulario</button>
+    </div>
+  </form>
 </section>
 
 <style>
@@ -755,4 +763,54 @@
     padding: 1.5rem 0;
     text-align: center;
   }
+
+  /* HERO */
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      135deg,
+      #1f2937 0%,
+      #111827 100%
+    );
+  color: white;
+}
+
+.hero h1 {
+  color: white;
+  margin-bottom: 0.35rem;
+  font-size: 2rem;
+}
+
+.hero .subtitulo {
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 1rem;
+  max-width: 680px;
+}
+
+.hero-etiqueta {
+  display: inline-block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin-bottom: 0.5rem;
+}
+.hero .enlace-volver {
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 0;
+}
+
+.hero .enlace-volver:hover {
+  color: white;
+}
+
 </style>
