@@ -79,9 +79,12 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
     .toContainText(`El terremoto de "${country}"`);
 
   // ---------- BORRAR TODOS ----------
-  // Primero recargar datos iniciales para tener algo que borrar
-  await page.goto('http://localhost:3000/api/v1/earthquakes/loadInitialData');
-  await page.goto('http://localhost:3000/earthquakes');
+  // Primero recargar datos iniciales para tener algo que borrar usando la interfaz
+  page.once('dialog', async (dialog) => {
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: 'Cargar datos iniciales' }).click();
+  await expect(page.locator('.mensaje.exito')).toContainText('Datos iniciales cargados correctamente.');
 
   page.once('dialog', async (dialog) => {
     await dialog.accept();
@@ -95,11 +98,14 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   await expect(page.locator('tbody tr')).toHaveCount(0);
 
   // ---------- RECARGAR DATOS ----------
-  await page.goto('http://localhost:3000/api/v1/earthquakes/loadInitialData');
-  await page.goto('http://localhost:3000/earthquakes');
+  page.once('dialog', async (dialog) => {
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: 'Cargar datos iniciales' }).click();
+  await expect(page.locator('.mensaje.exito')).toContainText('Datos iniciales cargados correctamente.');
 
   await expect(page.locator('tbody tr').first()).toBeVisible();
-
+  
   // ---------- VERIFICAR LISTADO ----------
   const filasCount = await page.locator('tbody tr').count();
   expect(filasCount).toBeGreaterThan(0);
