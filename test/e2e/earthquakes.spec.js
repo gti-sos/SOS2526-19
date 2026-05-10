@@ -18,7 +18,7 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   // ---------- CREAR ----------
   await page.getByLabel('País').first().fill(country);
   await page.getByLabel('Fecha de inicio').first().fill(fromdate);
-  await page.getByLabel('Severidad (escala Richter)').fill('6.5');
+  await page.getByLabel('Severidad (Richter)').fill('6.5');
 
   await page.getByRole('button', { name: 'Registrar terremoto' }).click();
 
@@ -37,7 +37,7 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
 
   await expect(page.locator('h1')).toContainText('Editar terremoto');
 
-  const inputSeveridad = page.getByLabel('Severidad (escala Richter)');
+  const inputSeveridad = page.getByLabel('Severidad (Richter)');
   await inputSeveridad.fill('7.0');
 
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
@@ -63,10 +63,7 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   // ---------- QUITAR FILTROS ----------
   await page.getByRole('button', { name: 'Limpiar búsqueda' }).click();
 
-  await page.waitForFunction(() => {
-    const filas = document.querySelectorAll('tbody tr');
-    return Array.from(filas).some(fila => fila.offsetParent !== null);
-  }, { timeout: 5000 });
+  await expect(page.locator('tbody tr')).not.toHaveCount(1);
 
   // ---------- BORRAR UNO ----------
   const filaBorrar = page.locator('tr', { hasText: country });
@@ -90,7 +87,7 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
     await dialog.accept();
   });
 
-  await page.getByRole('button', { name: 'Borrar todos los terremotos' }).click();
+  await page.getByRole('button', { name: 'Borrar todos' }).click();
 
   await expect(page.locator('.mensaje.exito'))
     .toContainText('Todos los terremotos se han eliminado correctamente.');
