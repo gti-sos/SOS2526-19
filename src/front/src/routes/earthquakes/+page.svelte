@@ -295,6 +295,64 @@
   </div>
 {/if}
 
+<!-- Registrar terremoto -->
+<section class="bloque">
+  <h2>Registrar nuevo terremoto</h2>
+
+  <form
+    onsubmit={(event) => { event.preventDefault(); crearRegistro(); }}
+    class="formulario-fila"
+  >
+    <div class="formulario-campos">
+      <label>
+        <span class="label-text">País <span class="obligatorio">*</span></span>
+        <input bind:value={formulario.country} placeholder="Ej: Spain" required />
+      </label>
+
+      <label>
+        <span class="label-text">Fecha de inicio <span class="obligatorio">*</span></span>
+        <input bind:value={formulario.fromdate} type="date" required />
+      </label>
+
+      <label>
+        Fecha de fin
+        <input bind:value={formulario.todate} type="date" />
+      </label>
+
+      <label>
+        <span class="label-text">Severidad (Richter) <span class="obligatorio">*</span></span>
+        <input bind:value={formulario.severity} type="number" step="0.1" placeholder="Ej: 6.5" required />
+      </label>
+
+      <label>
+        Nivel de alerta
+        <select bind:value={formulario.alertlevel}>
+          <option value="">— Sin especificar —</option>
+          <option value="Green">Verde</option>
+          <option value="Yellow">Amarillo</option>
+          <option value="Orange">Naranja</option>
+          <option value="Red">Rojo</option>
+        </select>
+      </label>
+
+      <label>
+        Profundidad (km)
+        <input bind:value={formulario.depth} type="number" step="0.1" placeholder="Ej: 10" />
+      </label>
+
+      <label>
+        Población expuesta
+        <input bind:value={formulario.exposed_population} type="number" placeholder="Ej: 50000" />
+      </label>
+    </div>
+
+    <div class="acciones-formulario">
+      <button type="submit" class="btn-primario">Registrar terremoto</button>
+      <button type="button" onclick={resetFormulario}>Limpiar formulario</button>
+    </div>
+  </form>
+</section>
+
 <!-- Buscar terremotos -->
 <section class="bloque">
   <h2>Buscar terremotos</h2>
@@ -411,64 +469,6 @@
       onclick={() => cargarRegistros(paginaActual + 1)}
     >Siguiente →</button>
   </div>
-</section>
-
-<!-- Registrar terremoto -->
-<section class="bloque">
-  <h2>Registrar nuevo terremoto</h2>
-
-  <form
-    onsubmit={(event) => { event.preventDefault(); crearRegistro(); }}
-    class="formulario-fila"
-  >
-    <div class="formulario-campos">
-      <label>
-        <span class="label-text">País <span class="obligatorio">*</span></span>
-        <input bind:value={formulario.country} placeholder="Ej: Spain" required />
-      </label>
-
-      <label>
-        <span class="label-text">Fecha de inicio <span class="obligatorio">*</span></span>
-        <input bind:value={formulario.fromdate} type="date" required />
-      </label>
-
-      <label>
-        Fecha de fin
-        <input bind:value={formulario.todate} type="date" />
-      </label>
-
-      <label>
-        <span class="label-text">Severidad (Richter) <span class="obligatorio">*</span></span>
-        <input bind:value={formulario.severity} type="number" step="0.1" placeholder="Ej: 6.5" required />
-      </label>
-
-      <label>
-        Nivel de alerta
-        <select bind:value={formulario.alertlevel}>
-          <option value="">— Sin especificar —</option>
-          <option value="Green">Verde</option>
-          <option value="Yellow">Amarillo</option>
-          <option value="Orange">Naranja</option>
-          <option value="Red">Rojo</option>
-        </select>
-      </label>
-
-      <label>
-        Profundidad (km)
-        <input bind:value={formulario.depth} type="number" step="0.1" placeholder="Ej: 10" />
-      </label>
-
-      <label>
-        Población expuesta
-        <input bind:value={formulario.exposed_population} type="number" placeholder="Ej: 50000" />
-      </label>
-    </div>
-
-    <div class="acciones-formulario">
-      <button type="submit" class="btn-primario">Registrar terremoto</button>
-      <button type="button" onclick={resetFormulario}>Limpiar formulario</button>
-    </div>
-  </form>
 </section>
 
 <style>
