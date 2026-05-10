@@ -1,3 +1,14 @@
+import { test, expect } from '@playwright/test';
+
+test('carga la página de gestión de terremotos', async ({ page }) => {
+  await page.goto('http://localhost:3000/earthquakes');
+
+  await expect(page).toHaveTitle(/Gestión de terremotos/);
+
+  const heading = page.locator('h1');
+  await expect(heading).toHaveText('Gestión de terremotos');
+});
+
 test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   await page.goto('http://localhost:3000/earthquakes');
 
