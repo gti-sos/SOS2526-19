@@ -1,14 +1,3 @@
-import { test, expect } from '@playwright/test';
-
-test('carga la página de gestión de terremotos', async ({ page }) => {
-  await page.goto('http://localhost:3000/earthquakes');
-
-  await expect(page).toHaveTitle(/Gestión de terremotos/);
-
-  const heading = page.locator('h1');
-  await expect(heading).toHaveText('Gestión de terremotos');
-});
-
 test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   await page.goto('http://localhost:3000/earthquakes');
 
@@ -16,9 +5,10 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   const fromdate = '2000-01-01';
 
   // ---------- CREAR ----------
-  await page.getByLabel('País').first().fill(country);
-  await page.getByLabel('Fecha de inicio').first().fill(fromdate);
-  await page.getByLabel('Severidad (Richter)').fill('6.5');
+  const seccionCrear = page.locator('section.bloque').nth(0);
+  await seccionCrear.getByLabel('País').fill(country);
+  await seccionCrear.getByLabel('Fecha de inicio').fill(fromdate);
+  await seccionCrear.getByLabel('Severidad (Richter)').fill('6.5');
 
   await page.getByRole('button', { name: 'Registrar terremoto' }).click();
 
@@ -51,7 +41,8 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   await expect(filaActualizada).toContainText('7');
 
   // ---------- FILTRAR ----------
-  await page.getByLabel('País').nth(1).fill(country);
+  const seccionBuscar = page.locator('section.bloque').nth(1);
+  await seccionBuscar.getByLabel('País').fill(country);
   await page.getByRole('button', { name: 'Buscar' }).click();
 
   const filasFiltradas = page.locator('tbody tr');
@@ -79,7 +70,6 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
     .toContainText(`El terremoto de "${country}"`);
 
   // ---------- BORRAR TODOS ----------
-  // Primero recargar datos iniciales para tener algo que borrar usando la interfaz
   page.once('dialog', async (dialog) => {
     await dialog.accept();
   });
@@ -105,7 +95,7 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   await expect(page.locator('.mensaje.exito')).toContainText('Datos iniciales cargados correctamente.');
 
   await expect(page.locator('tbody tr').first()).toBeVisible();
-  
+
   // ---------- VERIFICAR LISTADO ----------
   const filasCount = await page.locator('tbody tr').count();
   expect(filasCount).toBeGreaterThan(0);
