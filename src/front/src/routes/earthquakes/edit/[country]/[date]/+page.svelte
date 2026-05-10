@@ -6,13 +6,12 @@
 
   const API_BASE = '/api/v1/earthquakes';
 
-  const country = $derived($page.params.country);
-  const date = $derived($page.params.date);
+  const country = $derived($page.params.country ?? '');
+  const date = $derived($page.params.date ?? '');
 
   let cargando = $state(true);
   let guardando = $state(false);
-  let mensaje = $state('');
-  let tipoMensaje = $state('');
+  let estadoMensaje = $state({ texto: '', tipo: '' });
 
   let formulario = $state({
     country: '',
@@ -24,14 +23,21 @@
     exposed_population: ''
   });
 
-  function mostrarMensaje(texto, tipo = 'exito') {
-    mensaje = texto;
-    tipoMensaje = tipo;
-  }
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  let timeoutMensaje;
 
-  function limpiarMensaje() {
-    mensaje = '';
-    tipoMensaje = '';
+  /**
+   * @param {string} texto
+   * @param {'exito' | 'error'} [tipo='exito']
+   */
+  function mostrarMensaje(texto, tipo = 'exito') {
+    estadoMensaje = { texto, tipo };
+
+    clearTimeout(timeoutMensaje);
+
+    timeoutMensaje = setTimeout(() => {
+      estadoMensaje = { texto: '', tipo: '' };
+    }, 3000);
   }
 
   onMount(async () => {
@@ -65,7 +71,6 @@
   });
 
   async function guardarCambios() {
-    limpiarMensaje();
     guardando = true;
 
     /** @type {any} */
@@ -104,11 +109,13 @@
 
       mostrarMensaje('Los cambios se han guardado correctamente.', 'exito');
 
-      // Si cambiaron los identificadores, redirigir a la nueva ruta tras 1.5s
       const nuevoCountry = formulario.country;
       const nuevaDate = formulario.fromdate;
+
       if (nuevoCountry !== country || nuevaDate !== date) {
-        goto(`/earthquakes`);
+        setTimeout(() => {
+          goto('/earthquakes');
+        }, 3000);
       }
     } catch {
       mostrarMensaje('No se ha podido conectar con la API.', 'error');
@@ -122,137 +129,258 @@
   <title>Editar terremoto — {country} / {date}</title>
 </svelte:head>
 
+<h1>Editar terremoto</h1>
+<p class="subtitulo">Estás editando el terremoto de <strong>{country}</strong> con fecha de inicio <strong>{date}</strong>.</p>
+
 <p>
-  <a href="/earthquakes">← Volver al listado de terremotos</a>
+  <a href="/earthquakes" class="enlace-volver">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Volver al listado de terremotos
+  </a>
 </p>
 
-<h1>Editar terremoto</h1>
-<p>Estás editando el terremoto de <strong>{country}</strong> con fecha de inicio <strong>{date}</strong>.</p>
-
-{#if mensaje}
-  <div class={`mensaje ${tipoMensaje}`}>
-    {mensaje}
+{#if estadoMensaje.texto}
+  <div class="mensaje {estadoMensaje.tipo}">
+    {estadoMensaje.texto}
   </div>
 {/if}
 
 {#if cargando}
-  <p>Cargando datos del terremoto...</p>
+  <p class="estado-vacio">Cargando datos del terremoto...</p>
 {:else}
-  <form
-    onsubmit={(e) => { e.preventDefault(); guardarCambios(); }}
-    class="formulario"
-  >
-    <label>
-      País <span class="obligatorio">*</span>
-      <input bind:value={formulario.country} required />
-    </label>
+  <section class="bloque">
+    <h2>Datos del terremoto</h2>
 
-    <label>
-      Fecha de inicio <span class="obligatorio">*</span>
-      <input bind:value={formulario.fromdate} type="date" required />
-    </label>
+    <form
+      onsubmit={(e) => { e.preventDefault(); guardarCambios(); }}
+      class="formulario-fila"
+    >
+      <div class="formulario-campos">
+        <label>
+          <span class="label-text">País <span class="obligatorio">*</span></span>
+          <input bind:value={formulario.country} required />
+        </label>
 
-    <label>
-      Fecha de fin
-      <input bind:value={formulario.todate} type="date" />
-    </label>
+        <label>
+          <span class="label-text">Fecha de inicio <span class="obligatorio">*</span></span>
+          <input bind:value={formulario.fromdate} type="date" required />
+        </label>
 
-    <label>
-      Severidad (escala Richter) <span class="obligatorio">*</span>
-      <input bind:value={formulario.severity} type="number" step="0.1" required />
-    </label>
+        <label>
+          Fecha de fin
+          <input bind:value={formulario.todate} type="date" />
+        </label>
 
-    <label>
-      Nivel de alerta
-      <select bind:value={formulario.alertlevel}>
-        <option value="">— Sin especificar —</option>
-        <option value="Green">Verde</option>
-        <option value="Yellow">Amarillo</option>
-        <option value="Orange">Naranja</option>
-        <option value="Red">Rojo</option>
-      </select>
-    </label>
+        <label>
+          <span class="label-text">Severidad (Richter) <span class="obligatorio">*</span></span>
+          <input bind:value={formulario.severity} type="number" step="0.1" required />
+        </label>
 
-    <label>
-      Profundidad (km)
-      <input bind:value={formulario.depth} type="number" step="0.1" />
-    </label>
+        <label>
+          Nivel de alerta
+          <select bind:value={formulario.alertlevel}>
+            <option value="">— Sin especificar —</option>
+            <option value="Green">Verde</option>
+            <option value="Yellow">Amarillo</option>
+            <option value="Orange">Naranja</option>
+            <option value="Red">Rojo</option>
+          </select>
+        </label>
 
-    <label>
-      Población expuesta
-      <input bind:value={formulario.exposed_population} type="number" />
-    </label>
+        <label>
+          Profundidad (km)
+          <input bind:value={formulario.depth} type="number" step="0.1" />
+        </label>
 
-    <div class="acciones-formulario">
-      <button type="submit" disabled={guardando}>
-        {guardando ? 'Guardando...' : 'Guardar cambios'}
-      </button>
-      <a href="/earthquakes" class="boton-secundario">Cancelar</a>
-    </div>
-  </form>
+        <label>
+          Población expuesta
+          <input bind:value={formulario.exposed_population} type="number" />
+        </label>
+      </div>
+
+      <div class="acciones-formulario">
+        <button type="submit" class="btn-primario" disabled={guardando}>
+          {guardando ? 'Guardando...' : 'Guardar cambios'}
+        </button>
+        <a href="/earthquakes" class="boton-cancelar">Cancelar</a>
+      </div>
+    </form>
+  </section>
 {/if}
 
 <style>
-  h1 { margin-bottom: 0.4rem; }
-
-  .formulario {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 0.9rem;
-    margin-top: 1.2rem;
+  :global(body) {
+    font-family: Arial, sans-serif;
+    background: #f7f6f3;
+    color: #1a1a1a;
   }
 
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #555;
+  }
+
+  .subtitulo {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.35rem;
+  }
+
+  .subtitulo strong {
+    color: #1a1a1a;
     font-weight: 600;
   }
 
-  .obligatorio { color: #c0392b; margin-left: 2px; }
+  .enlace-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    color: #666;
+    text-decoration: none;
+    margin-bottom: 1.5rem;
+  }
+
+  .enlace-volver:hover {
+    color: #1a1a1a;
+  }
+
+  .bloque {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+  }
+
+  /* Formulario */
+  .formulario-fila {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .formulario-campos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+  }
+
+  .formulario-campos label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #555;
+    flex: 1 1 180px;
+    min-width: 0;
+  }
+
+  .label-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .obligatorio {
+    color: #c0392b;
+  }
 
   input, select {
-    padding: 0.55rem;
-    border: 1px solid #bbb;
-    border-radius: 6px;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #ddd;
+    border-radius: 7px;
     font: inherit;
-  }
-
-  button {
-    padding: 0.6rem 1rem;
-    border: 1px solid #999;
-    border-radius: 6px;
-    background: #f5f5f5;
-    cursor: pointer;
-  }
-
-  button:hover:not(:disabled) { background: #ececec; }
-  button:disabled { opacity: 0.4; cursor: default; }
-
-  .boton-secundario {
-    padding: 0.6rem 1rem;
-    border: 1px solid #bbb;
-    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #1a1a1a;
     background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: #aaa;
+  }
+
+  /* Botones */
+  button, .boton-cancelar {
+    padding: 0.5rem 0.9rem;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    background: #fff;
+    font: inherit;
+    font-size: 0.85rem;
+    color: #1a1a1a;
+    cursor: pointer;
+    white-space: nowrap;
     text-decoration: none;
-    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  button:hover:not(:disabled), .boton-cancelar:hover {
+    background: #f5f5f3;
+    border-color: #bbb;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .btn-primario {
+    background: #1a1a1a;
+    color: #fff;
+    border-color: #1a1a1a;
+  }
+
+  .btn-primario:hover:not(:disabled) {
+    background: #333;
+    border-color: #333;
   }
 
   .acciones-formulario {
-    grid-column: 1 / -1;
     display: flex;
-    gap: 0.6rem;
-    margin-top: 0.5rem;
+    gap: 0.5rem;
     align-items: center;
   }
 
+  /* Mensajes */
   .mensaje {
-    padding: 0.9rem;
+    padding: 0.8rem 1rem;
     border-radius: 8px;
-    margin: 1rem 0;
-    font-weight: 600;
+    margin: 0.75rem 0;
+    font-size: 0.875rem;
+    font-weight: 500;
   }
 
-  .mensaje.exito { background: #e9f8ee; border: 1px solid #7abf8a; }
-  .mensaje.error { background: #fdecec; border: 1px solid #d98d8d; }
+  .mensaje.exito {
+    background: #edf7f0;
+    border: 1px solid #a3d4b0;
+    color: #1e6b3a;
+  }
+
+  .mensaje.error {
+    background: #fdecea;
+    border: 1px solid #f0b8b5;
+    color: #9b2020;
+  }
+
+  .estado-vacio {
+    font-size: 0.875rem;
+    color: #888;
+    padding: 1.5rem 0;
+  }
 </style>
