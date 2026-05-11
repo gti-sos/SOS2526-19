@@ -112,7 +112,7 @@ test('crea, edita, borra y filtra terremotos', async ({ page }) => {
   expect(filasCount).toBeGreaterThan(0);
 
   const primeraFila = page.locator('tbody tr').first();
-  await expect(primeraFila.locator('td').nth(0)).not.toBeEmpty(); // País
-  await expect(primeraFila.locator('td').nth(1)).not.toBeEmpty(); // Fecha de inicio
-  await expect(primeraFila.locator('td').nth(3)).not.toBeEmpty(); // Severidad
+  await expect(primeraFila.locator('td').nth(0)).not.toBeEmpty();
+  await expect(primeraFila.locator('td').nth(1)).not.toBeEmpty(); 
+  await expect(primeraFila.locator('td').nth(3)).not.toBeEmpty(); 
 });
