@@ -1,42 +1,71 @@
 <script>
-    //@ts-nocheck
-	let { data } = $props();
+	//@ts-nocheck
+	import { onMount } from 'svelte';
 
-    let selectedPokemon = $state(null);
-    let loadingDetails = $state(false);
+	let pokemon = $state([]);
+	let selectedPokemon = $state(null);
 
-    async function loadDetails(pokemon) {
-        console.log("CLICK:", pokemon);
+	let loadingList = $state(true);
+	let loadingDetails = $state(false);
 
-        loadingDetails = true;
-        selectedPokemon = null;
+	onMount(async () => {
 
-        try {
-            console.log("URL:", pokemon.url);
+		try {
 
-            const res = await fetch(pokemon.url);
+			const response = await fetch(
+				'https://pokeapi.co/api/v2/pokemon?limit=151'
+			);
 
-            console.log("STATUS:", res.status);
+			const data = await response.json();
 
-            const details = await res.json();
+			pokemon = data.results.map((p) => {
 
-            console.log("DETAILS:", details);
+				const id = p.url.split('/')[6];
 
-            selectedPokemon = {
-                ...pokemon,
-                types: details.types.map((t) => t.type.name),
-                height: details.height,
-                weight: details.weight
-            };
+				return {
+					id,
+					name: p.name,
+					image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
+					url: p.url
+				};
+			});
 
-            console.log("SELECTED:", selectedPokemon);
+		} catch (err) {
 
-        } catch (err) {
-            console.error("ERROR FETCH:", err);
-        } finally {
-            loadingDetails = false;
-        }
-    }
+			console.error('ERROR LIST:', err);
+
+		} finally {
+
+			loadingList = false;
+		}
+	});
+
+	async function loadDetails(pokemonItem) {
+
+		loadingDetails = true;
+		selectedPokemon = null;
+
+		try {
+
+			const res = await fetch(pokemonItem.url);
+			const details = await res.json();
+
+			selectedPokemon = {
+				...pokemonItem,
+				types: details.types.map((t) => t.type.name),
+				height: details.height,
+				weight: details.weight
+			};
+
+		} catch (err) {
+
+			console.error('ERROR DETAILS:', err);
+
+		} finally {
+
+			loadingDetails = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -45,76 +74,104 @@
 
 <h1>Pokédex</h1>
 
-<div class="layout">
-	<table>
-		<thead>
-			<tr>
-				<th>ID</th>
-				<th>Imagen</th>
-				<th>Nombre</th>
-				<th>Acción</th>
-			</tr>
-		</thead>
+{#if loadingList}
 
-		<tbody>
-			{#each data.pokemon as pokemon}
+	<p>Cargando Pokémon...</p>
+
+{:else}
+
+	<div class="layout">
+
+		<table>
+
+			<thead>
 				<tr>
-					<td>#{pokemon.id}</td>
-
-					<td>
-						<img src={pokemon.image} alt={pokemon.name} />
-					</td>
-
-					<td class="name">
-						{pokemon.name}
-					</td>
-
-					<td>
-						<button
-							class="btn"
-							onclick={() => loadDetails(pokemon)}
-						>
-							Ver
-						</button>
-					</td>
+					<th>ID</th>
+					<th>Imagen</th>
+					<th>Nombre</th>
+					<th>Acción</th>
 				</tr>
-			{/each}
-		</tbody>
-	</table>
+			</thead>
 
-	<aside class="details">
-		{#if loadingDetails}
-			<p>Cargando...</p>
+			<tbody>
 
-		{:else if selectedPokemon}
-			<h2>
-				#{selectedPokemon.id} {selectedPokemon.name}
-			</h2>
+				{#each pokemon as p}
 
-			<img
-				class="big"
-				src={selectedPokemon.image}
-				alt={selectedPokemon.name}
-			/>
+					<tr>
 
-			<h3>Tipos</h3>
+						<td>#{p.id}</td>
 
-			<div class="types">
-				{#each selectedPokemon.types as type}
-					<span class="type {type}">
-						{type}
-					</span>
+						<td>
+							<img src={p.image} alt={p.name} />
+						</td>
+
+						<td class="name">
+							{p.name}
+						</td>
+
+						<td>
+							<button
+								class="btn"
+								on:click={() => loadDetails(p)}
+							>
+								Ver
+							</button>
+						</td>
+
+					</tr>
+
 				{/each}
-			</div>
 
-			<p><b>Altura:</b> {selectedPokemon.height}</p>
-			<p><b>Peso:</b> {selectedPokemon.weight}</p>
+			</tbody>
 
-		{:else}
-			<p>Selecciona un Pokémon</p>
-		{/if}
-	</aside>
-</div>
+		</table>
+
+		<aside class="details">
+
+			{#if loadingDetails}
+
+				<p>Cargando...</p>
+
+			{:else if selectedPokemon}
+
+				<h2>
+					#{selectedPokemon.id} {selectedPokemon.name}
+				</h2>
+
+				<img
+					class="big"
+					src={selectedPokemon.image}
+					alt={selectedPokemon.name}
+				/>
+
+				<h3>Tipos</h3>
+
+				<div class="types">
+
+					{#each selectedPokemon.types as type}
+
+						<span class="type {type}">
+							{type}
+						</span>
+
+					{/each}
+
+				</div>
+
+				<p><b>Altura:</b> {selectedPokemon.height}</p>
+				<p><b>Peso:</b> {selectedPokemon.weight}</p>
+
+			{:else}
+
+				<p>Selecciona un Pokémon</p>
+
+			{/if}
+
+		</aside>
+
+	</div>
+
+{/if}
 
 <style>
 	h1 {
@@ -136,8 +193,7 @@
 		overflow: hidden;
 	}
 
-	th,
-	td {
+	th, td {
 		padding: 10px;
 		border-bottom: 1px solid #333;
 		text-align: left;

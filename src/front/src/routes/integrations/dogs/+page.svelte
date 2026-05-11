@@ -1,65 +1,31 @@
 <script>
-  //@ts-nocheck
+	//@ts-nocheck
 	import { onMount } from 'svelte';
 
 	let breeds = $state([]);
 	let loading = $state(true);
-	let progress = $state(0);
 	let error = $state(null);
 
-	function formatBreed(breed) {
-		return breed
-			.split('/')
-			.reverse()
-			.join(' ')
-			.replace(/\b\w/g, (l) => l.toUpperCase());
-	}
-
-	async function getImage(breed) {
-		try {
-			const res = await fetch(
-				`https://dog.ceo/api/breed/${breed}/images/random`
-			);
-			const data = await res.json();
-			return data.message;
-		} catch {
-			return null;
-		}
-	}
-
 	onMount(async () => {
+
 		try {
-			const res = await fetch(
-				'https://dog.ceo/api/breeds/list/all'
-			);
 
+			const res = await fetch('/api/dogs');
 			const data = await res.json();
-			const breedNames = Object.keys(data.message);
 
-			const results = [];
-
-			for (let i = 0; i < breedNames.length; i++) {
-				const breed = breedNames[i];
-
-				const image = await getImage(breed);
-
-				results.push({
-					name: breed,
-					label: formatBreed(breed),
-					image
-				});
-
-				progress = Math.round(
-					((i + 1) / breedNames.length) * 100
-				);
+			if (data.error) {
+				throw new Error(data.error);
 			}
 
-			breeds = results;
+			breeds = data;
 
 		} catch (err) {
+
 			console.error(err);
 			error = 'Error cargando razas';
+
 		} finally {
+
 			loading = false;
 		}
 	});
@@ -68,7 +34,8 @@
 <h1>🐶 Razas de perros</h1>
 
 {#if loading}
-	<p>Cargando... {progress}%</p>
+
+	<p>Cargando...</p>
 
 	<div class="grid">
 		{#each Array(12) as _}
@@ -77,24 +44,37 @@
 	</div>
 
 {:else if error}
+
 	<p>{error}</p>
 
 {:else}
+
 	<div class="grid">
+
 		{#each breeds as breed}
+
 			<div class="card">
-				<img
-					src={breed.image}
-					alt={breed.name}
-					loading="lazy"
-				/>
+
+				{#if breed.image}
+					<img
+						src={breed.image}
+						alt={breed.name}
+						loading="lazy"
+					/>
+				{/if}
+
 				<p>{breed.label}</p>
+
 			</div>
+
 		{/each}
+
 	</div>
+
 {/if}
 
 <style>
+
 	h1 {
 		margin-bottom: 1rem;
 	}
@@ -126,12 +106,11 @@
 		text-transform: capitalize;
 	}
 
-	/* Skeleton loading */
 	.skeleton {
 		background: linear-gradient(
 			90deg,
 			#2a2a2a,
-			#3a3a3a,
+			#3a3a2a,
 			#2a2a2a
 		);
 		background-size: 200% 100%;
@@ -142,4 +121,5 @@
 		0% { background-position: 200% 0; }
 		100% { background-position: -200% 0; }
 	}
+
 </style>
