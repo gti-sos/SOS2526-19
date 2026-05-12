@@ -73,6 +73,22 @@
           proxy: 'No',
           chart: 'Juego HTML',
           description: 'Juego interactivo que consume Deck of Cards API.'
+        },
+        {
+          name: 'wine-stats',
+          route: '/integrations/wine-stats',
+          kind: 'SOS otro grupo',
+          proxy: 'No',
+          chart: 'Highcharts column',
+          description: 'Muestra una media enseñando el impacto de las sequias para el precio de los vinos.'
+        },
+        {
+          name: 'natural-disasters',
+          route: '/integrations/natural-disasters',
+          kind: 'SOS otro grupo',
+          proxy: 'No',
+          chart: 'Highcharts pie chart',
+          description: 'Representa la relación entre la severidad de las sequías y el coste medio internacional de construcción.'
         }
       ]
     }
