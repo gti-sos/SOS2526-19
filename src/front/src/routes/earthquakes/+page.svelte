@@ -756,12 +756,6 @@
 
   /* Mensajes */
   .mensaje {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-
-    z-index: 9999;
     padding: 0.8rem 1rem;
     border-radius: 8px;
     margin: 0.75rem 0;
