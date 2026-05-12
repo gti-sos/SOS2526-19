@@ -309,29 +309,29 @@
     class="formulario-fila"
   >
     <div class="formulario-campos">
-      <label>
+      <label for="country">
         <span class="label-text">País <span class="obligatorio">*</span></span>
-        <input bind:value={formulario.country} placeholder="Ej: Spain" required />
+        <input id="country" bind:value={formulario.country} placeholder="Ej: Spain" required />
       </label>
 
-      <label>
+      <label for="fromdate">
         <span class="label-text">Fecha de inicio <span class="obligatorio">*</span></span>
-        <input bind:value={formulario.fromdate} type="date" required />
+        <input id="fromdate" bind:value={formulario.fromdate} type="date" required />
       </label>
 
-      <label>
+      <label for="todate">
         Fecha de fin
-        <input bind:value={formulario.todate} type="date" />
+        <input id="todate" bind:value={formulario.todate} type="date" />
       </label>
 
-      <label>
+      <label for="severity">
         <span class="label-text">Severidad (Richter) <span class="obligatorio">*</span></span>
-        <input bind:value={formulario.severity} type="number" step="0.1" placeholder="Ej: 6.5" required />
+        <input id="severity" bind:value={formulario.severity} type="number" step="0.1" placeholder="Ej: 6.5" required />
       </label>
 
-      <label>
+      <label for="alertlevel">
         Nivel de alerta
-        <select bind:value={formulario.alertlevel}>
+        <select id="alertlevel" bind:value={formulario.alertlevel}>
           <option value="">— Sin especificar —</option>
           <option value="Green">Verde</option>
           <option value="Yellow">Amarillo</option>
@@ -340,14 +340,14 @@
         </select>
       </label>
 
-      <label>
+      <label for="depth">
         Profundidad (km)
-        <input bind:value={formulario.depth} type="number" step="0.1" placeholder="Ej: 10" />
+        <input id="depth" bind:value={formulario.depth} type="number" step="0.1" placeholder="Ej: 10" />
       </label>
 
-      <label>
+      <label for="exposed_population">
         Población expuesta
-        <input bind:value={formulario.exposed_population} type="number" placeholder="Ej: 50000" />
+        <input id="exposed_population" bind:value={formulario.exposed_population} type="number" placeholder="Ej: 50000" />
       </label>
     </div>
 
