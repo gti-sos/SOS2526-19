@@ -10,6 +10,7 @@ import cors from 'cors';
 import { loadBackendPRA } from './src/back/index-PRA.js';
 import { loadBackendRDB } from './src/back/index-RDB.js';
 import { loadBackendJMJ } from './src/back/index-JMJ.js';
+import { loadIntegrationsProxy } from './src/back/integrations-proxy.js';
 
 import {handler} from './src/front/build/handler.js';
 
@@ -29,6 +30,7 @@ app.listen(PORT, console.log(`Server running on port ${PORT}`));
 loadBackendPRA(app);
 loadBackendRDB(app);
 loadBackendJMJ(app);
+loadIntegrationsProxy(app);
 
 app.use(handler);
 
