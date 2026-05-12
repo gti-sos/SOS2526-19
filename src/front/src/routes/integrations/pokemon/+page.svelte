@@ -112,7 +112,7 @@
 						<td>
 							<button
 								class="btn"
-								on:click={() => loadDetails(p)}
+								onclick={() => loadDetails(p)}
 							>
 								Ver
 							</button>
