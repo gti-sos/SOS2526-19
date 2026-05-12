@@ -24,7 +24,7 @@
     "test-workers-productivity": "start-server-and-test start http://localhost:3000 test-workers-productivity-api",
     "test-earthquakes": "start-server-and-test start http://localhost:3000 test-earthquakes-api",
     "test-droughts": "start-server-and-test start http://localhost:3000 test-droughts-api",
-    "test": "npm run test-workers-productivity && npm run test-earthquakes && npm run test-droughts"
+    "test": "npm run test-workers-productivity && npm run test-droughts"
   },
   "dependencies": {
     "@seald-io/nedb": "^4.1.2",

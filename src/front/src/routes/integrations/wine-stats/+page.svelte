@@ -13,12 +13,43 @@
 
     async function loadInitialData() {
 
-        // API drought
+        // =========================
+        // DROUGHT (igual que antes)
+        // =========================
+
         const droughtRes = await fetch('/api/v1/drought-stats');
         droughtData = await droughtRes.json();
 
-        // API wine integrada
-        const wineRes = await fetch('/api/wine-stats');
+        // =========================
+        // WINE: LOAD INITIAL DATA
+        // =========================
+
+        const loadWineRes = await fetch(
+            'https://sos2526-29.onrender.com/api/v1/wine-stats/loadInitialData',
+            {
+                method: 'GET'
+            }
+        );
+
+        // ignoramos 409 si existe
+        if (!loadWineRes.ok && loadWineRes.status !== 409) {
+            throw new Error(
+                'Error loading initial data for wine-stats'
+            );
+        }
+
+        // =========================
+        // WINE DATA
+        // =========================
+
+        const wineRes = await fetch(
+            'https://sos2526-29.onrender.com/api/v1/wine-stats'
+        );
+
+        if (!wineRes.ok) {
+            throw new Error('Error fetching wine-stats');
+        }
+
         wineData = await wineRes.json();
 
         processData();
@@ -44,7 +75,6 @@
                 };
             }
 
-            
             droughtByCountry[country].totalSeverity += Number(d.severity_km2);
             droughtByCountry[country].count += 1;
         });
@@ -83,12 +113,12 @@
 
             const droughtAvg = droughtByCountry[country]
                 ? droughtByCountry[country].totalSeverity /
-                droughtByCountry[country].count
+                  droughtByCountry[country].count
                 : 0;
 
             const winePriceAvg = wineByCountry[country]
                 ? wineByCountry[country].totalPrice /
-                wineByCountry[country].count
+                  wineByCountry[country].count
                 : 0;
 
             mergedData.push({
@@ -97,8 +127,6 @@
                 winePriceAvg
             });
         });
-
-        console.log(mergedData);
 
         renderChart();
     }
