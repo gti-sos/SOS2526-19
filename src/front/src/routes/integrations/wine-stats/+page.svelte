@@ -44,6 +44,7 @@
                 };
             }
 
+            
             droughtByCountry[country].totalSeverity += Number(d.severity_km2);
             droughtByCountry[country].count += 1;
         });
