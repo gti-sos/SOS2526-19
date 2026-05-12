@@ -26,6 +26,13 @@
   ];
 
   const githubRepo = "https://github.com/gti-sos/SOS2526-19";
+
+  const analyticsLinks = [
+    { label: "Analytics grupal", href: "/analytics" },
+    { label: "Grafico de workers-productivity", href: "/analytics/workers-productivity" },
+    { label: "Grafico de drought-stats", href: "/analytics/drought-stats" },
+    { label: "Grafico de earthquakes", href: "/analytics/earthquakes" }
+  ];
 </script>
 
 <svelte:head>
@@ -55,6 +62,22 @@
       {:else}
         Frontend de {member.name} (pendiente)
       {/if}
+    </li>
+  {/each}
+  <li>
+    <a href="/integrations">
+      Portal de integraciones
+    </a>
+  </li>
+</ul>
+
+<h2>Graficos y analytics</h2>
+<ul>
+  {#each analyticsLinks as item}
+    <li>
+      <a href={item.href}>
+        {item.label}
+      </a>
     </li>
   {/each}
 </ul>
