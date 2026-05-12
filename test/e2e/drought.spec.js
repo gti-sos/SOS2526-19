@@ -13,7 +13,7 @@ test('carga la página de gestión de sequías', async ({ page }) => {
 test('crea y borra un registro específico de sequía', async ({ page }) => {
     await page.goto('http://localhost:3000/drought-stats');
 
-    const country = 'Spain';
+    const country = 'Argentina';
     const fromDate = '2022';
 
     // ---------- CREAR ----------
@@ -25,7 +25,7 @@ test('crea y borra un registro específico de sequía', async ({ page }) => {
     await page.getByTestId('from_date').fill('2022');
     await page.getByTestId('to_date').fill('2023');
     await page.getByTestId('severity_km2').fill('500');
-    await page.getByTestId('iso').fill('ESP');
+    await page.getByTestId('iso').fill('ARG');
     await page.getByTestId('gdacs_id').fill('DELETE123');
     await page.getByTestId('duration_day').fill('10');
     await page.getByTestId('impact').fill('Low');
