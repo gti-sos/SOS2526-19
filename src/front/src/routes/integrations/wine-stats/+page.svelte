@@ -13,16 +13,8 @@
 
     async function loadInitialData() {
 
-        // =========================
-        // DROUGHT (igual que antes)
-        // =========================
-
         const droughtRes = await fetch('/api/v1/drought-stats');
         droughtData = await droughtRes.json();
-
-        // =========================
-        // WINE: LOAD INITIAL DATA
-        // =========================
 
         const loadWineRes = await fetch(
             'https://sos2526-29.onrender.com/api/v1/wine-stats/loadInitialData',
@@ -31,16 +23,11 @@
             }
         );
 
-        // ignoramos 409 si existe
         if (!loadWineRes.ok && loadWineRes.status !== 409) {
             throw new Error(
                 'Error loading initial data for wine-stats'
             );
         }
-
-        // =========================
-        // WINE DATA
-        // =========================
 
         const wineRes = await fetch(
             'https://sos2526-29.onrender.com/api/v1/wine-stats'
@@ -60,10 +47,6 @@
         const droughtByCountry = {};
         const wineByCountry = {};
 
-        // =========================
-        // DROUGHT
-        // =========================
-
         droughtData.forEach(d => {
 
             const country = d.country.toLowerCase();
@@ -79,10 +62,6 @@
             droughtByCountry[country].count += 1;
         });
 
-        // =========================
-        // WINE
-        // =========================
-
         wineData.forEach(w => {
 
             const country = w.country.toLowerCase();
@@ -97,10 +76,6 @@
             wineByCountry[country].totalPrice += Number(w.price);
             wineByCountry[country].count += 1;
         });
-
-        // =========================
-        // MERGE
-        // =========================
 
         mergedData = [];
 

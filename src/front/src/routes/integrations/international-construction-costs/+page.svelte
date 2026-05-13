@@ -14,24 +14,16 @@
 
             loading = true;
 
-            // =========================
-            // LOAD INITIAL DATA
-            // =========================
-
             const loadRes = await fetch(
                 "https://sos2526-24.onrender.com/api/v1/international-construction-costs/loadInitialData"
             );
 
-            // ignorar 409
             if (!loadRes.ok && loadRes.status !== 409) {
                 throw new Error(
                     `Error loading initial data: ${loadRes.status}`
                 );
             }
 
-            // =========================
-            // FETCH APIs
-            // =========================
 
             const [droughtRes, constructionRes] = await Promise.all([
                 fetch(
@@ -49,9 +41,6 @@
             const droughtData = await droughtRes.json();
             const constructionData = await constructionRes.json();
 
-            // =========================
-            // GROUP DROUGHT
-            // =========================
 
             const droughtMap = {};
 
@@ -71,9 +60,6 @@
                     Number(d.severity_km2 || 0);
             });
 
-            // =========================
-            // GROUP CONSTRUCTION
-            // =========================
 
             const constructionMap = {};
 
@@ -95,10 +81,6 @@
 
                 constructionMap[country].count += 1;
             });
-
-            // =========================
-            // INTEGRATE
-            // =========================
 
             const integratedData = [];
 
@@ -123,16 +105,10 @@
                 }
             });
 
-            // ordenar
             integratedData.sort((a, b) => b.y - a.y);
 
             const topCountries = integratedData.slice(0, 8);
 
-            // =========================
-            // CREATE CHART
-            // =========================
-
-            // comprobar que el div existe
             if (chartContainer) {
 
                 Highcharts.chart(chartContainer, {
