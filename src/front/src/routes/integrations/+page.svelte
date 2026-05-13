@@ -48,7 +48,7 @@
     },
     {
       name: 'Pablo Rodriguez Armesto',
-      note: 'Integraciones externas existentes del proyecto.',
+      note: 'Integraciones cruzadas con drought-stats.',
       integrations: [
         {
           name: 'Pokemon',
@@ -73,6 +73,22 @@
           proxy: 'No',
           chart: 'Juego HTML',
           description: 'Juego interactivo que consume Deck of Cards API.'
+        },
+        {
+          name: 'wine-stats',
+          route: '/integrations/wine-stats',
+          kind: 'SOS otro grupo',
+          proxy: 'No',
+          chart: 'Highcharts column',
+          description: 'Muestra una media enseñando el impacto de las sequias para el precio de los vinos.'
+        },
+        {
+          name: 'international-construction-costs',
+          route: '/integrations/international-construction-costs',
+          kind: 'SOS otro grupo',
+          proxy: 'No',
+          chart: 'Highcharts pie chart',
+          description: 'Representa la relación entre la severidad de las sequías y el coste medio internacional de construcción.'
         }
       ]
     }

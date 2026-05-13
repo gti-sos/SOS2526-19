@@ -13,12 +13,30 @@
 
     async function loadInitialData() {
 
-        // API drought
         const droughtRes = await fetch('/api/v1/drought-stats');
         droughtData = await droughtRes.json();
 
-        // API wine integrada
-        const wineRes = await fetch('/api/wine-stats');
+        const loadWineRes = await fetch(
+            'https://sos2526-29.onrender.com/api/v1/wine-stats/loadInitialData',
+            {
+                method: 'GET'
+            }
+        );
+
+        if (!loadWineRes.ok && loadWineRes.status !== 409) {
+            throw new Error(
+                'Error loading initial data for wine-stats'
+            );
+        }
+
+        const wineRes = await fetch(
+            'https://sos2526-29.onrender.com/api/v1/wine-stats'
+        );
+
+        if (!wineRes.ok) {
+            throw new Error('Error fetching wine-stats');
+        }
+
         wineData = await wineRes.json();
 
         processData();
@@ -28,10 +46,6 @@
 
         const droughtByCountry = {};
         const wineByCountry = {};
-
-        // =========================
-        // DROUGHT
-        // =========================
 
         droughtData.forEach(d => {
 
@@ -44,14 +58,9 @@
                 };
             }
 
-            
             droughtByCountry[country].totalSeverity += Number(d.severity_km2);
             droughtByCountry[country].count += 1;
         });
-
-        // =========================
-        // WINE
-        // =========================
 
         wineData.forEach(w => {
 
@@ -68,10 +77,6 @@
             wineByCountry[country].count += 1;
         });
 
-        // =========================
-        // MERGE
-        // =========================
-
         mergedData = [];
 
         const allCountries = new Set([
@@ -83,12 +88,12 @@
 
             const droughtAvg = droughtByCountry[country]
                 ? droughtByCountry[country].totalSeverity /
-                droughtByCountry[country].count
+                  droughtByCountry[country].count
                 : 0;
 
             const winePriceAvg = wineByCountry[country]
                 ? wineByCountry[country].totalPrice /
-                wineByCountry[country].count
+                  wineByCountry[country].count
                 : 0;
 
             mergedData.push({
@@ -97,8 +102,6 @@
                 winePriceAvg
             });
         });
-
-        console.log(mergedData);
 
         renderChart();
     }
