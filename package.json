@@ -19,10 +19,12 @@
     "build-front": "cd src/front && npm install && npm run build",
     "dev-front": "cd src/front && npm run dev -- --open",
     "test-workers-productivity-api": "newman run test/api/api-RDB-tests.json -e test/api/api-RDB-test-env-local.json",
+    "test-earthquakes-api": "newman run test/api/api-JMJ-tests.json -e test/api/api-JMJ-test-env-local.json",
     "test-droughts-api": "newman run test/api/api-PRA-tests.json -e test/api/api-PRA-test-env-local.json",
     "test-workers-productivity": "start-server-and-test start http://localhost:3000 test-workers-productivity-api",
+    "test-earthquakes": "start-server-and-test start http://localhost:3000 test-earthquakes-api",
     "test-droughts": "start-server-and-test start http://localhost:3000 test-droughts-api",
-    "test": "npm run test-workers-productivity && npm run test-droughts"
+    "test": "npm run test-workers-productivity && npm run test-earthquakes && npm run test-droughts"
   },
   "dependencies": {
     "@seald-io/nedb": "^4.1.2",
