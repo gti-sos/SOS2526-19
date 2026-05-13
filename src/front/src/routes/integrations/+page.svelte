@@ -48,7 +48,7 @@
     },
     {
       name: 'Pablo Rodriguez Armesto',
-      note: 'Integraciones externas existentes del proyecto.',
+      note: 'Integraciones cruzadas con drought-stats.',
       integrations: [
         {
           name: 'Pokemon',
@@ -83,8 +83,8 @@
           description: 'Muestra una media enseñando el impacto de las sequias para el precio de los vinos.'
         },
         {
-          name: 'natural-disasters',
-          route: '/integrations/natural-disasters',
+          name: 'international-construction-costs',
+          route: '/integrations/international-construction-costs',
           kind: 'SOS otro grupo',
           proxy: 'No',
           chart: 'Highcharts pie chart',
