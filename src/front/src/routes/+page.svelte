@@ -110,3 +110,11 @@
     {githubRepo}
   </a>
 </p>
+
+
+<h2>📦 Videos</h2>
+<p>
+  <a href="/about" target="_blank">
+    Videos de los integrantes
+  </a>
+</p>
