@@ -91,6 +91,20 @@
           description: 'Representa la relación entre la severidad de las sequías y el coste medio internacional de construcción.'
         }
       ]
+    },
+    {
+      name: 'Javier Morales Jiménez',
+      note: 'Integraciones cruzadas con earthquakes.',
+      integrations: [
+        {
+          name: 'Todas las integraciones',
+          route: '/integrations/JMJ',
+          kind: '',
+          proxy: 'Si',
+          chart: 'Echarts',
+          description: 'Pagina en la que se muestran todas las integraciones.'
+        }
+      ]
     }
   ];
 
