@@ -732,8 +732,8 @@
           {#each registros as registro}
             <tr>
               <td>{registro.country}</td>
-              <td>{mostrarFecha(registro.fromdate)}</td>
-              <td>{mostrarFecha(registro.todate)}</td>
+              <td>{registro.fromdate}</td>
+              <td>{registro.todate ?? '—'}</td>
               <td>{registro.severity}</td>
               <td><span class={claseAlerta(registro.alertlevel)}>{textoAlerta(registro.alertlevel)}</span></td>
               <td>{registro.depth != null ? `${registro.depth} km` : '—'}</td>
