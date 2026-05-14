@@ -238,17 +238,18 @@
         });
         window.addEventListener('resize', () => chart.resize());
     }
-
+        
     // ═══════════════════════════════════════════════════════════════════════════
     // 3. TravelRiskAPI
     //    URL:    https://travelriskapi.com/api/v1/countries
     //    Auth:   Header X-API-Key: demo-key-travel-risk-2026
     //    Estilo: RESTful JSON
-    //    Cruce:  Scatter XY: eje X = severidad sísmica media (API propia),
-    //            eje Y = risk_score (TravelRiskAPI). Tamaño de burbuja = nº
-    //            de terremotos del país. Permite ver correlación entre
-    //            actividad sísmica y riesgo para viajeros.
-    //    Widget: ECharts SCATTER XY
+    //    Cruce:  Gráfico de barras horizontales donde cada país muestra
+    //            su severidad sísmica media calculada desde la API propia.
+    //            El color de la barra representa el advisory level de
+    //            TravelRiskAPI y el tooltip muestra también el risk_score
+    //            y el número de terremotos registrados.
+    //    Widget: ECharts HORIZONTAL BAR
     // ═══════════════════════════════════════════════════════════════════════════
     async function cargarTravelRisk() {
         try {
@@ -297,55 +298,104 @@
 
     async function renderTravelRisk(puntos, total) {
         if (!chartTravelRisk) return;
+
         const echarts = await import('echarts');
-        const chart = echarts.init(chartTravelRisk, null, { width: chartTravelRisk.clientWidth, height: 420 });
+
+        const chart = echarts.init(chartTravelRisk, null, {
+            width: chartTravelRisk.clientWidth,
+            height: 420
+        });
+
+        // Ordenar por severidad
+        puntos.sort((a, b) => b.sevMedia - a.sevMedia);
 
         chart.setOption({
             backgroundColor: 'transparent',
+
             title: {
-                text: 'Severidad sísmica vs. Riesgo para viajeros',
-                subtext: `${puntos.length} países cruzados de ${total} disponibles en TravelRiskAPI`,
+                text: 'Severidad sísmica por país',
+                subtext: `${puntos.length} países cruzados de ${total} disponibles`,
                 left: 'center',
                 top: 8,
                 subtextStyle: { fontSize: 12 }
             },
+
             tooltip: {
-                trigger: 'item',
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                },
                 formatter: (params) => {
-                    const d = params.data;
-                    return `<b>${d[2]}</b><br/>
-                        Severidad media: <b>${d[0]}</b><br/>
-                        Risk score: <b>${d[1]}</b><br/>
-                        Terremotos: <b>${d[3]}</b><br/>
-                        Advisory level: <b>${d[4]}</b>`;
+                    const d = puntos[params[0].dataIndex];
+
+                    return `
+                        <b>${d.nombre}</b><br/>
+                        Severidad media: <b>${d.sevMedia}</b><br/>
+                        Risk Score: <b>${d.riskScore}</b><br/>
+                        Advisory Level: <b>${d.advisory}</b><br/>
+                        Nº terremotos: <b>${d.numTerremotos}</b>
+                    `;
                 }
             },
-            grid: { top: 80, bottom: 60, left: 70, right: 20 },
+
+            grid: {
+                top: 90,
+                left: 120,
+                right: 40,
+                bottom: 40
+            },
+
             xAxis: {
                 type: 'value',
-                name: 'Severidad media',
-                nameLocation: 'middle',
-                nameGap: 30
+                name: 'Severidad media'
             },
+
             yAxis: {
-                type: 'value',
-                name: 'Risk Score (TravelRiskAPI)',
-                nameLocation: 'middle',
-                nameGap: 50
+                type: 'category',
+                data: puntos.map(p => p.nombre)
             },
-            series: [{
-                type: 'scatter',
-                data: puntos.map(p => [p.sevMedia, p.riskScore, p.nombre, p.numTerremotos, p.advisory]),
-                symbolSize: (val) => Math.max(val[3] * 6, 10),
-                itemStyle: { color: '#98c379', opacity: 0.85 },
-                label: {
-                    show: puntos.length <= 10,
-                    formatter: (p) => p.data[2],
-                    position: 'top',
-                    fontSize: 10
+
+            visualMap: {
+                min: 0,
+                max: 5,
+                dimension: 1,
+                orient: 'horizontal',
+                left: 'center',
+                bottom: 0,
+                text: ['Advisory alto', 'Advisory bajo'],
+                calculable: true,
+                inRange: {
+                    color: ['#91cc75', '#fac858', '#ee6666']
                 }
-            }]
+            },
+
+            series: [
+                {
+                    type: 'bar',
+
+                    data: puntos.map(p => [
+                        p.sevMedia,
+                        p.advisory
+                    ]),
+
+                    encode: {
+                        x: 0,
+                        y: 1
+                    },
+
+                    itemStyle: {
+                        borderRadius: [0, 6, 6, 0]
+                    },
+
+                    label: {
+                        show: true,
+                        position: 'right',
+                        formatter: (p) => p.value[0]
+                    }
+                }
+            ]
         });
+
         window.addEventListener('resize', () => chart.resize());
     }
 
@@ -764,16 +814,17 @@
             <p class="bloque-meta">
                 <span class="badge badge-ext">API pública · demo key</span>
                 <code>travelriskapi.com/api/v1/countries</code>
-                &nbsp;·&nbsp; ECharts <strong>scatter XY</strong>
+                &nbsp;·&nbsp; ECharts <strong>horizontal bar</strong>
             </p>
         </div>
 
         <div class="integracion-info">
             <strong>Cruce de datos:</strong> Para cada país presente en ambas fuentes,
-            el eje X muestra la severidad sísmica media y el eje Y muestra el risk score
-            de TravelRiskAPI. El tamaño de cada burbuja es proporcional al número de
-            terremotos del país. Permite visualizar si una mayor actividad sísmica
-            correlaciona con un mayor riesgo para viajeros.
+            se calcula la severidad sísmica media utilizando los datos de la API propia.
+            El gráfico de barras horizontales permite comparar visualmente la actividad
+            sísmica entre países. El color de cada barra representa el advisory level
+            proporcionado por TravelRiskAPI, mientras que el tooltip muestra también
+            el risk score y el número de terremotos registrados.
             <br/>
             <strong>Autenticación:</strong> <code>X-API-Key: demo-key-travel-risk-2026</code>
         </div>
