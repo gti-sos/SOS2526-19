@@ -28,15 +28,11 @@
 
   /** @type {EarthquakeRecord[]} */
   let registros = $state([]);
-
   let cargando = $state(false);
   let cargandoInicial = $state(false);
   let paginaActual = $state(1);
 
-  let estadoMensaje = $state({
-    texto: '',
-    tipo: ''
-  });
+  let estadoMensaje = $state({ texto: '', tipo: '' });
 
   /** @type {EarthquakeForm} */
   let formulario = $state({
@@ -49,72 +45,10 @@
     exposed_population: ''
   });
 
-  let filtroBusqueda = $state({
-    country: '',
-    severity: '',
-    alertlevel: '',
-    fromdate: '',
-    todate: '',
-    depth: '',
-    exposed_population: ''
-  });
-
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   let timeoutMensaje;
 
-  /**
-   * Convierte:
-   * 31/01/2015 -> 2015-01-31
-   */
-  function convertirFecha(fecha) {
-    if (!fecha) return '';
-
-    // Ya está normalizada
-    if (fecha.includes('-')) return fecha;
-
-    const partes = fecha.split('/');
-
-    if (partes.length !== 3) return fecha;
-
-    const [dia, mes, anio] = partes;
-
-    return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-  }
-
-  /**
-   * Convierte:
-   * 2015-01-31 -> 31/01/2015
-   */
-  function mostrarFecha(fecha) {
-    if (!fecha) return '—';
-
-    if (fecha.includes('/')) return fecha;
-
-    const partes = fecha.split('-');
-
-    if (partes.length !== 3) return fecha;
-
-    const [anio, mes, dia] = partes;
-
-    return `${dia}/${mes}/${anio}`;
-  }
-
-  /**
-   * Normaliza registros de la API
-   */
-  function normalizarRegistro(registro) {
-    return {
-      ...registro,
-      fromdate: convertirFecha(registro.fromdate),
-      todate: convertirFecha(registro.todate),
-      alertlevel: registro.alertlevel?.trim()
-    };
-  }
-
-  /**
-   * @param {string} texto
-   * @param {'exito'|'error'} [tipo='exito']
-   */
+  /** @param {string} texto @param {'exito' | 'error'} [tipo='exito'] */
   function mostrarMensaje(texto, tipo = 'exito') {
     estadoMensaje = { texto, tipo };
 
@@ -135,369 +69,176 @@
     formulario.exposed_population = '';
   }
 
+  /** @returns {EarthquakeRecord} */
   function normalizarPayload() {
+    /** @type {any} */
     const payload = {
-      country: formulario.country.trim(),
+      country: formulario.country,
       fromdate: formulario.fromdate,
       severity: Number(formulario.severity)
     };
-
-    if (formulario.todate) {
-      payload.todate = formulario.todate;
-    }
-
-    if (formulario.alertlevel) {
-      payload.alertlevel = formulario.alertlevel.trim();
-    }
-
-    if (formulario.depth !== '') {
-      payload.depth = Number(formulario.depth);
-    }
-
-    if (formulario.exposed_population !== '') {
-      payload.exposed_population = Number(formulario.exposed_population);
-    }
-
+    if (formulario.todate) payload.todate = formulario.todate;
+    if (formulario.alertlevel) payload.alertlevel = formulario.alertlevel;
+    if (formulario.depth !== '') payload.depth = Number(formulario.depth);
+    if (formulario.exposed_population !== '') payload.exposed_population = Number(formulario.exposed_population);
     return payload;
   }
 
+  /** @param {number} [pagina=1] */
   async function cargarRegistros(pagina = 1) {
     cargando = true;
-
     try {
       const respuesta = await fetch(`${API_BASE}?page=${pagina}`);
-
       if (!respuesta.ok) {
-        mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, {}),
-          'error'
-        );
-
+        mostrarMensaje(traducirErrorApiEarthquake(respuesta.status, {}), 'error');
         registros = [];
         return;
       }
-
-      const datos = await respuesta.json();
-
-      registros = datos.map(normalizarRegistro);
-
+      registros = /** @type {EarthquakeRecord[]} */ (await respuesta.json());
       paginaActual = pagina;
-
     } catch (error) {
-
-      mostrarMensaje(
-        'No se ha podido conectar con la API.',
-        'error'
-      );
-
+      mostrarMensaje('No se ha podido conectar con la API.', 'error');
       registros = [];
-
     } finally {
       cargando = false;
     }
   }
 
   async function cargarDatosIniciales() {
-
-    const confirmado = confirm(
-      '¿Quieres cargar los datos iniciales? Esto puede sobreescribir registros existentes.'
-    );
-
+    const confirmado = confirm('¿Quieres cargar los datos iniciales? Esto puede sobreescribir registros existentes.');
     if (!confirmado) return;
-
     cargandoInicial = true;
-
     try {
-
-      const respuesta = await fetch(
-        `${API_BASE}/loadInitialData`,
-        {
-          method: 'GET'
-        }
-      );
-
+      const respuesta = await fetch(`${API_BASE}/loadInitialData`, { method: 'GET' });
       if (!respuesta.ok) {
-        mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, {}),
-          'error'
-        );
-
+        mostrarMensaje(traducirErrorApiEarthquake(respuesta.status, {}), 'error');
         return;
       }
-
-      mostrarMensaje(
-        'Datos iniciales cargados correctamente.',
-        'exito'
-      );
-
+      mostrarMensaje('Datos iniciales cargados correctamente.', 'exito');
       await cargarRegistros(1);
-
     } catch (error) {
-
-      mostrarMensaje(
-        'No se ha podido conectar con la API.',
-        'error'
-      );
-
+      mostrarMensaje('No se ha podido conectar con la API.', 'error');
     } finally {
       cargandoInicial = false;
     }
   }
 
   async function crearRegistro() {
-
     const payload = normalizarPayload();
-
     try {
-
       const respuesta = await fetch(API_BASE, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       if (!respuesta.ok) {
-
         mostrarMensaje(
-          traducirErrorApiEarthquake(
-            respuesta.status,
-            {
-              country: payload.country,
-              fromdate: payload.fromdate
-            }
-          ),
+          traducirErrorApiEarthquake(respuesta.status, { country: payload.country, fromdate: payload.fromdate }),
           'error'
         );
-
         return;
       }
-
-      mostrarMensaje(
-        'El terremoto se ha registrado correctamente.',
-        'exito'
-      );
-
+      mostrarMensaje('El terremoto se ha registrado correctamente.', 'exito');
       resetFormulario();
-
       await cargarRegistros(paginaActual);
-
     } catch (error) {
-
-      mostrarMensaje(
-        'No se ha podido conectar con la API.',
-        'error'
-      );
+      mostrarMensaje('No se ha podido conectar con la API.', 'error');
     }
   }
 
   async function borrarTodos() {
-
-    const confirmado = confirm(
-      '¿Seguro que quieres borrar todos los terremotos?'
-    );
-
+    const confirmado = confirm('¿Seguro que quieres borrar todos los terremotos? Esta acción no se puede deshacer.');
     if (!confirmado) return;
-
     try {
-
-      const respuesta = await fetch(API_BASE, {
-        method: 'DELETE'
-      });
-
+      const respuesta = await fetch(API_BASE, { method: 'DELETE' });
       if (!respuesta.ok) {
-
-        mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, {}),
-          'error'
-        );
-
+        mostrarMensaje(traducirErrorApiEarthquake(respuesta.status, {}), 'error');
         return;
       }
-
       registros = [];
-
-      mostrarMensaje(
-        'Todos los terremotos se han eliminado correctamente.',
-        'exito'
-      );
-
+      mostrarMensaje('Todos los terremotos se han eliminado correctamente.', 'exito');
     } catch (error) {
-
-      mostrarMensaje(
-        'No se ha podido conectar con la API.',
-        'error'
-      );
+      mostrarMensaje('No se ha podido conectar con la API.', 'error');
     }
   }
 
+  /** @param {string} country @param {string} fromdate */
   async function borrarRegistro(country, fromdate) {
-
-    const confirmado = confirm(
-      `¿Seguro que quieres eliminar el terremoto de "${country}" ocurrido el ${fromdate}?`
-    );
-
+    const confirmado = confirm(`¿Seguro que quieres eliminar el terremoto de "${country}" ocurrido el ${fromdate}?`);
     if (!confirmado) return;
-
     try {
-
       const respuesta = await fetch(
         `${API_BASE}/${encodeURIComponent(country)}/${encodeURIComponent(fromdate)}`,
-        {
-          method: 'DELETE'
-        }
+        { method: 'DELETE' }
       );
-
       if (!respuesta.ok) {
-
-        mostrarMensaje(
-          traducirErrorApiEarthquake(
-            respuesta.status,
-            { country, fromdate }
-          ),
-          'error'
-        );
-
+        mostrarMensaje(traducirErrorApiEarthquake(respuesta.status, { country, fromdate }), 'error');
         return;
       }
-
-      mostrarMensaje(
-        `El terremoto de "${country}" del ${fromdate} se ha eliminado correctamente.`,
-        'exito'
-      );
-
+      mostrarMensaje(`El terremoto de "${country}" del ${fromdate} se ha eliminado correctamente.`, 'exito');
       await cargarRegistros(paginaActual);
-
     } catch (error) {
-
-      mostrarMensaje(
-        'No se ha podido conectar con la API.',
-        'error'
-      );
+      mostrarMensaje('No se ha podido conectar con la API.', 'error');
     }
   }
 
+  onMount(cargarRegistros);
+
+  let filtroBusqueda = $state({
+    country: '',
+    severity: '',
+    alertlevel: '',
+    fromdate: '',
+    todate: '',
+    depth: '', 
+    exposed_population: ''
+  });
+
   async function buscarRegistros() {
-
     cargando = true;
-
+    const params = new URLSearchParams();
+    if (filtroBusqueda.country) params.set('country', filtroBusqueda.country);
+    if (filtroBusqueda.severity !== '') params.set('severity', String(filtroBusqueda.severity));
+    if (filtroBusqueda.alertlevel) params.set('alertlevel', filtroBusqueda.alertlevel);
+    if (filtroBusqueda.fromdate) params.set('fromdate', filtroBusqueda.fromdate);
+    if (filtroBusqueda.todate) params.set('todate', filtroBusqueda.todate);
+    if (filtroBusqueda.depth !== '') params.set('depth', String(filtroBusqueda.depth));
+    if (filtroBusqueda.exposed_population !== '') params.set('exposed_population', String(filtroBusqueda.exposed_population));
+    params.set('page', '1');
     try {
-
-      const respuesta = await fetch(`${API_BASE}`);
-
+      const respuesta = await fetch(`${API_BASE}?${params.toString()}`);
       if (!respuesta.ok) {
-
         mostrarMensaje(
-          traducirErrorApiEarthquake(respuesta.status, {}),
+          traducirErrorApiEarthquake(respuesta.status, {
+            country: filtroBusqueda.country || undefined,
+            fromdate: filtroBusqueda.fromdate || undefined
+          }),
           'error'
         );
-
         registros = [];
         return;
       }
 
-      let datos = await respuesta.json();
-
-      datos = datos.map(normalizarRegistro);
-
-      // FILTRO POR PAÍS
-      if (filtroBusqueda.country) {
-        datos = datos.filter(r =>
-          r.country
-            ?.toLowerCase()
-            .includes(filtroBusqueda.country.toLowerCase())
-        );
-      }
-
-      // FILTRO POR ALERTA
-      if (filtroBusqueda.alertlevel) {
-        datos = datos.filter(r =>
-          r.alertlevel
-            ?.trim()
-            .toLowerCase() ===
-          filtroBusqueda.alertlevel
-            .trim()
-            .toLowerCase()
-        );
-      }
-
-      // FILTRO POR SEVERIDAD
-      if (filtroBusqueda.severity !== '') {
-
-        const severityMin = Number(filtroBusqueda.severity);
-
-        datos = datos.filter(r =>
-          Number(r.severity) >= severityMin
-        );
-      }
-
-      // FILTRO FECHA INICIO
-      if (filtroBusqueda.fromdate) {
-
-        datos = datos.filter(r =>
-          r.fromdate >= filtroBusqueda.fromdate
-        );
-      }
-
-      // FILTRO FECHA FIN
-      if (filtroBusqueda.todate) {
-
-        datos = datos.filter(r =>
-          r.todate <= filtroBusqueda.todate
-        );
-      }
-
-      // FILTRO PROFUNDIDAD
-      if (filtroBusqueda.depth !== '') {
-
-        const depthMin = Number(filtroBusqueda.depth);
-
-        datos = datos.filter(r =>
-          Number(r.depth) >= depthMin
-        );
-      }
-
-      // FILTRO POBLACIÓN
-      if (filtroBusqueda.exposed_population !== '') {
-
-        const populationMin =
-          Number(filtroBusqueda.exposed_population);
-
-        datos = datos.filter(r =>
-          Number(r.exposed_population) >= populationMin
-        );
-      }
-
-      registros = datos;
-
+      registros = await respuesta.json();
       paginaActual = 1;
-
-      if (registros.length === 0) {
-
+      if (registros.length === 0 && respuesta.ok) {
         mostrarMensaje(
-          'No se encontraron terremotos con esos filtros.',
-          'error'
+          traducirErrorApiEarthquake(404, {
+            country: filtroBusqueda.country || undefined,
+            fromdate: filtroBusqueda.fromdate || undefined
+          }),
+          'exito'
         );
       }
-
-    } catch (error) {
-
-      mostrarMensaje(
-        'No se ha podido conectar con la API.',
-        'error'
-      );
-
+    } catch {
+      mostrarMensaje('No se ha podido conectar con la API.', 'error');
       registros = [];
-
     } finally {
-
       cargando = false;
     }
   }
 
   function limpiarBusqueda() {
-
     filtroBusqueda.country = '';
     filtroBusqueda.severity = '';
     filtroBusqueda.alertlevel = '';
@@ -505,53 +246,30 @@
     filtroBusqueda.todate = '';
     filtroBusqueda.depth = '';
     filtroBusqueda.exposed_population = '';
-
     cargarRegistros(1);
   }
 
+  /** @param {string|null} nivel */
   function claseAlerta(nivel) {
-
-    switch (nivel?.toLowerCase()) {
-
-      case 'green':
-        return 'badge badge-green';
-
-      case 'yellow':
-        return 'badge badge-yellow';
-
-      case 'orange':
-        return 'badge badge-orange';
-
-      case 'red':
-        return 'badge badge-red';
-
-      default:
-        return 'badge badge-none';
+    switch (nivel) {
+      case 'Green': return 'badge badge-green';
+      case 'Yellow': return 'badge badge-yellow';
+      case 'Orange': return 'badge badge-orange';
+      case 'Red': return 'badge badge-red';
+      default: return 'badge badge-none';
     }
   }
 
+  /** @param {string|null} nivel*/
   function textoAlerta(nivel) {
-
-    switch (nivel?.toLowerCase()) {
-
-      case 'green':
-        return 'Verde';
-
-      case 'yellow':
-        return 'Amarillo';
-
-      case 'orange':
-        return 'Naranja';
-
-      case 'red':
-        return 'Rojo';
-
-      default:
-        return '—';
+    switch (nivel) {
+      case 'Green': return 'Verde';
+      case 'Yellow': return 'Amarillo';
+      case 'Orange': return 'Naranja';
+      case 'Red': return 'Rojo';
+      default: return '—';
     }
   }
-
-  onMount(cargarRegistros);
 </script>
 
 <svelte:head>

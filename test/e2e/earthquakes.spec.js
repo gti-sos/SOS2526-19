@@ -1,51 +1,60 @@
 import { test, expect } from '@playwright/test';
 
 test('carga la página de gestión de terremotos', async ({ page }) => {
+
   await page.goto('http://localhost:3000/earthquakes');
 
   await expect(page).toHaveTitle(/Gestión de terremotos/);
 
-  const heading = page.locator('h1');
-  await expect(heading).toHaveText('Gestión de terremotos');
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Gestión de terremotos'
+    })
+  ).toBeVisible();
 });
 
 test('crea, edita, filtra y borra terremotos', async ({ page }) => {
 
   await page.goto('http://localhost:3000/earthquakes');
 
-  const country = 'TestPais';
+  const country = `TestPais-${Date.now()}`;
   const fromdate = '2000-01-01';
 
   // =========================================================
   // CREAR
   // =========================================================
 
-  const seccionCrear = page.locator('section.bloque').nth(0);
-
-  await seccionCrear.getByLabel('País').fill(country);
+  const seccionCrear = page.locator('section.bloque').first();
 
   await seccionCrear
-    .getByLabel('Fecha de inicio')
+    .locator('#country')
+    .fill(country);
+
+  await seccionCrear
+    .locator('#fromdate')
     .fill(fromdate);
 
   await seccionCrear
-    .getByLabel('Severidad \\(Richter\\)')
+    .locator('#severity')
     .fill('6.5');
 
   await seccionCrear
-    .getByLabel('Nivel de alerta')
+    .locator('#alertlevel')
     .selectOption('Orange');
 
   await seccionCrear
-    .getByLabel('Profundidad \\(km\\)')
+    .locator('#depth')
     .fill('15');
 
   await seccionCrear
-    .getByLabel('Población expuesta')
+    .locator('#exposed_population')
     .fill('50000');
 
-  await page
-    .getByRole('button', { name: 'Registrar terremoto' })
+  await seccionCrear
+    .getByRole('button', {
+      name: 'Registrar terremoto'
+    })
     .click();
 
   await expect(
@@ -58,14 +67,20 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
   // VERIFICAR FILA CREADA
   // =========================================================
 
-  const fila = page.locator('tr', {
+  const fila = page.locator('tbody tr', {
     hasText: country
   });
 
   await expect(fila).toBeVisible();
 
-  await expect(fila).toContainText('Orange');
+  await expect(fila).toContainText('6.5');
+
+  // El texto visible es "Naranja", no "Orange"
+  await expect(fila).toContainText('Naranja');
+
   await expect(fila).toContainText('15 km');
+
+  await expect(fila).toContainText('50.000');
 
   // =========================================================
   // EDITAR
@@ -76,19 +91,24 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
     .click();
 
   await expect(page).toHaveURL(
-    `http://localhost:3000/earthquakes/edit/${encodeURIComponent(country)}/${encodeURIComponent(fromdate)}`
+    new RegExp(
+      `/earthquakes/edit/${encodeURIComponent(country)}/${encodeURIComponent(fromdate)}`
+    )
   );
 
   await expect(
-    page.locator('h1')
+    page.getByRole('heading', { level: 1 })
   ).toContainText('Editar terremoto');
 
-  const inputSeveridad = page.getByLabel('Severidad \\(Richter\\)');
-
-  await inputSeveridad.fill('7.0');
+  // usar id porque el label puede cambiar
+  await page
+    .locator('#severity')
+    .fill('7.0');
 
   await page
-    .getByRole('button', { name: 'Guardar cambios' })
+    .getByRole('button', {
+      name: 'Guardar cambios'
+    })
     .click();
 
   await expect(
@@ -98,14 +118,16 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
   );
 
   // =========================================================
-  // VOLVER A LISTADO
+  // VOLVER AL LISTADO
   // =========================================================
 
   await page.goto('http://localhost:3000/earthquakes');
 
-  const filaActualizada = page.locator('tr', {
+  const filaActualizada = page.locator('tbody tr', {
     hasText: country
   });
+
+  await expect(filaActualizada).toBeVisible();
 
   await expect(filaActualizada).toContainText('7');
 
@@ -115,11 +137,12 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
 
   const seccionBuscar = page.locator('section.bloque').nth(1);
 
+  // usamos nth() porque hay varios labels iguales
   await seccionBuscar
     .getByLabel('País')
     .fill(country);
 
-  await page
+  await seccionBuscar
     .getByRole('button', { name: 'Buscar' })
     .click();
 
@@ -130,6 +153,7 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
   expect(count).toBeGreaterThan(0);
 
   for (let i = 0; i < count; i++) {
+
     await expect(
       filasFiltradas.nth(i)
     ).toContainText(country);
@@ -139,19 +163,21 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
   // LIMPIAR FILTROS
   // =========================================================
 
-  await page
-    .getByRole('button', { name: 'Limpiar búsqueda' })
+  await seccionBuscar
+    .getByRole('button', {
+      name: 'Limpiar búsqueda'
+    })
     .click();
 
   // =========================================================
-  // FILTRAR POR ALERTLEVEL
+  // FILTRAR POR ALERTA
   // =========================================================
 
   await seccionBuscar
     .getByLabel('Nivel de alerta')
     .selectOption('Orange');
 
-  await page
+  await seccionBuscar
     .getByRole('button', { name: 'Buscar' })
     .click();
 
@@ -163,21 +189,19 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
 
   for (let i = 0; i < count; i++) {
 
-    const filaTexto = await filasFiltradas
-      .nth(i)
-      .textContent();
-
-    expect(
-      filaTexto?.toLowerCase()
-    ).toContain('naranja');
+    await expect(
+      filasFiltradas.nth(i)
+    ).toContainText('Naranja');
   }
 
   // =========================================================
   // LIMPIAR FILTROS
   // =========================================================
 
-  await page
-    .getByRole('button', { name: 'Limpiar búsqueda' })
+  await seccionBuscar
+    .getByRole('button', {
+      name: 'Limpiar búsqueda'
+    })
     .click();
 
   // =========================================================
@@ -188,7 +212,7 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
     .getByLabel('Fecha de inicio')
     .fill(fromdate);
 
-  await page
+  await seccionBuscar
     .getByRole('button', { name: 'Buscar' })
     .click();
 
@@ -202,22 +226,24 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
 
     await expect(
       filasFiltradas.nth(i)
-    ).toContainText('01/01/2000');
+    ).toContainText('2000-01-01');
   }
 
   // =========================================================
   // LIMPIAR FILTROS
   // =========================================================
 
-  await page
-    .getByRole('button', { name: 'Limpiar búsqueda' })
+  await seccionBuscar
+    .getByRole('button', {
+      name: 'Limpiar búsqueda'
+    })
     .click();
 
   // =========================================================
   // BORRAR UNO
   // =========================================================
 
-  const filaBorrar = page.locator('tr', {
+  const filaBorrar = page.locator('tbody tr', {
     hasText: country
   });
 
@@ -228,7 +254,9 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
   });
 
   await filaBorrar
-    .getByRole('button', { name: 'Eliminar' })
+    .getByRole('button', {
+      name: 'Eliminar'
+    })
     .click();
 
   await expect(
@@ -246,7 +274,9 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
   });
 
   await page
-    .getByRole('button', { name: 'Cargar datos iniciales' })
+    .getByRole('button', {
+      name: 'Cargar datos iniciales'
+    })
     .click();
 
   await expect(
@@ -264,7 +294,9 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
   });
 
   await page
-    .getByRole('button', { name: 'Borrar todos' })
+    .getByRole('button', {
+      name: 'Borrar todos'
+    })
     .click();
 
   await expect(
@@ -286,7 +318,9 @@ test('crea, edita, filtra y borra terremotos', async ({ page }) => {
   });
 
   await page
-    .getByRole('button', { name: 'Cargar datos iniciales' })
+    .getByRole('button', {
+      name: 'Cargar datos iniciales'
+    })
     .click();
 
   await expect(
