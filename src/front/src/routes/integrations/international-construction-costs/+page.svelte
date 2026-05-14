@@ -1,12 +1,13 @@
 <script>
     //@ts-nocheck
     import { onMount } from "svelte";
-    import Highcharts from "highcharts";
+    import * as echarts from "echarts";
 
     let loading = $state(true);
     let error = $state(null);
 
     let chartContainer = $state(null);
+    let chartInstance = null;
 
     async function loadData() {
 
@@ -24,7 +25,6 @@
                 );
             }
 
-
             const [droughtRes, constructionRes] = await Promise.all([
                 fetch(
                     "https://sos2526-19.onrender.com/api/v1/drought-stats"
@@ -40,7 +40,6 @@
 
             const droughtData = await droughtRes.json();
             const constructionData = await constructionRes.json();
-
 
             const droughtMap = {};
 
@@ -59,7 +58,6 @@
                 droughtMap[country].totalSeverity +=
                     Number(d.severity_km2 || 0);
             });
-
 
             const constructionMap = {};
 
@@ -100,54 +98,82 @@
 
                     integratedData.push({
                         name: country,
-                        y: Number(integratedValue.toFixed(0))
+                        value: Number(integratedValue.toFixed(0))
                     });
                 }
             });
 
-            integratedData.sort((a, b) => b.y - a.y);
+            integratedData.sort((a, b) => b.value - a.value);
 
             const topCountries = integratedData.slice(0, 8);
 
             if (chartContainer) {
 
-                Highcharts.chart(chartContainer, {
+                chartInstance = echarts.init(chartContainer);
 
-                    chart: {
-                        type: "pie",
-                        backgroundColor: "#f8fafc"
-                    },
+                const option = {
+
+                    backgroundColor: "#f8fafc",
 
                     title: {
-                        text: "Drought vs Construction Costs"
-                    },
-
-                    plotOptions: {
-                        pie: {
-                            innerSize: "55%",
-
-                            dataLabels: {
-                                enabled: true,
-                                format:
-                                    "<b>{point.name}</b><br/>" +
-                                    "{point.percentage:.1f}%"
-                            }
-                        }
+                        text: "Drought vs Construction Costs",
+                        left: "center"
                     },
 
                     tooltip: {
-                        pointFormat:
-                            "<b>{point.percentage:.1f}%</b><br/>" +
-                            "Integrated value: {point.y:,.0f}"
+                        trigger: "item",
+                        formatter:
+                            "{b}<br/>" +
+                            "{d}%<br/>" +
+                            "Integrated value: {c}"
+                    },
+
+                    legend: {
+                        orient: "vertical",
+                        left: "left"
                     },
 
                     series: [
                         {
                             name: "Integrated Impact",
-                            colorByPoint: true,
+                            type: "pie",
+
+                            radius: ["40%", "70%"],
+
+                            avoidLabelOverlap: false,
+
+                            itemStyle: {
+                                borderRadius: 8,
+                                borderColor: "#fff",
+                                borderWidth: 2
+                            },
+
+                            label: {
+                                show: true,
+                                formatter: "{b}\n{d}%"
+                            },
+
+                            emphasis: {
+                                label: {
+                                    show: true,
+                                    fontSize: 18,
+                                    fontWeight: "bold"
+                                }
+                            },
+
+                            labelLine: {
+                                show: true
+                            },
+
                             data: topCountries
                         }
                     ]
+                };
+
+                chartInstance.setOption(option);
+
+                window.addEventListener("resize", () => {
+                    chartInstance.resize();
                 });
             }
 
@@ -179,51 +205,53 @@
         <p class="error">{error}</p>
     {/if}
 
-    <!-- SIEMPRE EXISTE -->
-    <div bind:this={chartContainer}></div>
+    <div
+        bind:this={chartContainer}
+        style="width: 100%; height: 600px;"
+    ></div>
 
     <div class="info-box">
 
-    <h3>¿Qué representa este gráfico?</h3>
+        <h3>¿Qué representa este gráfico?</h3>
 
-    <p>
-        Cada sector del gráfico representa un país presente en ambas APIs.
-    </p>
+        <p>
+            Cada sector del gráfico representa un país presente en ambas APIs.
+        </p>
 
-    <p>
-        El valor numérico mostrado se calcula mediante:
-    </p>
+        <p>
+            El valor numérico mostrado se calcula mediante:
+        </p>
 
-    <div class="formula">
-        severity_km2 × average construction cost (USD/m²)
+        <div class="formula">
+            severity_km2 × average construction cost (USD/m²)
+        </div>
+
+        <p>
+            Esto combina:
+        </p>
+
+        <ul>
+            <li>
+                La severidad total de las sequías registradas
+                (<strong>severity_km2</strong>)
+            </li>
+
+            <li>
+                El coste medio internacional de construcción
+                (<strong>cost_usd_per_m2</strong>)
+            </li>
+        </ul>
+
+        <p>
+            Un valor más alto indica países donde coinciden:
+        </p>
+
+        <ul>
+            <li>grandes impactos por sequía</li>
+            <li>costes de construcción elevados</li>
+        </ul>
+
     </div>
-
-    <p>
-        Esto combina:
-    </p>
-
-    <ul>
-        <li>
-            La severidad total de las sequías registradas
-            (<strong>severity_km2</strong>)
-        </li>
-
-        <li>
-            El coste medio internacional de construcción
-            (<strong>cost_usd_per_m2</strong>)
-        </li>
-    </ul>
-
-    <p>
-        Un valor más alto indica países donde coinciden:
-    </p>
-
-    <ul>
-        <li>grandes impactos por sequía</li>
-        <li>costes de construcción elevados</li>
-    </ul>
-
-</div>
 
 </div>
 

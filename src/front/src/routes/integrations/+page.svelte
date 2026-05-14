@@ -79,7 +79,7 @@
           route: '/integrations/wine-stats',
           kind: 'SOS otro grupo',
           proxy: 'No',
-          chart: 'Highcharts column',
+          chart: 'Highcharts bar',
           description: 'Muestra una media enseñando el impacto de las sequias para el precio de los vinos.'
         },
         {
@@ -87,7 +87,7 @@
           route: '/integrations/international-construction-costs',
           kind: 'SOS otro grupo',
           proxy: 'No',
-          chart: 'Highcharts pie chart',
+          chart: 'echarts pie chart',
           description: 'Representa la relación entre la severidad de las sequías y el coste medio internacional de construcción.'
         }
       ]

@@ -105,13 +105,13 @@
 
         renderChart();
     }
-
+    
     function renderChart() {
 
         chart = Highcharts.chart('container', {
 
             chart: {
-                type: 'column'
+                type: 'bar'
             },
 
             title: {
