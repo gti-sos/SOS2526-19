@@ -14,9 +14,13 @@
   "author": "",
   "type": "module",
   "main": "index.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
-    "start": "npm run build-front && node index.js",
-    "build-front": "cd src/front && npm install && npm run build",
+    "start": "node index.js",
+    "build": "npm run build-front",
+    "build-front": "npm --prefix src/front ci --include=dev && npm --prefix src/front run build",
     "dev-front": "cd src/front && npm run dev -- --open",
     "test-workers-productivity-api": "newman run test/api/api-RDB-tests.json -e test/api/api-RDB-test-env-local.json",
     "test-earthquakes-api": "newman run test/api/api-JMJ-tests.json -e test/api/api-JMJ-test-env-local.json",
@@ -32,7 +36,6 @@
     "cors": "^2.8.6",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.4.2",
-    "echarts": "^6.0.0",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "fs": "^0.0.1-security",
